@@ -1,8 +1,8 @@
 <div align="center">
-
-![228433275](https://github.com/user-attachments/assets/047ddee1-ea15-4dfa-bced-42bd5cc6463b)
-
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+<img src="https://github.com/user-attachments/assets/047ddee1-ea15-4dfa-bced-42bd5cc6463b" alt="Athenova Logo" width="80">
 <h1 align="center">Athenova</h1>
+</div>
 <p align="center">
 <b>Decentralize Knowledge. Empower Creators.</b>
 <br />
