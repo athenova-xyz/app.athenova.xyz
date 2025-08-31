@@ -55,4 +55,4 @@ Open http://localhost:3000 in your browser to see the application!
 We welcome contributions of all kinds! Whether you're fixing a bug, proposing a new feature, or improving documentation, your help is appreciated.
 Please read our CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
 📜 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the AGPL 3.0 License - see the LICENSE file for details.
