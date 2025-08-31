@@ -1,25 +1,27 @@
 <div align="center">
 <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-<img src="https://github.com/user-attachments/assets/047ddee1-ea15-4dfa-bced-42bd5cc6463b" alt="Athenova Logo" width="80">
+<img src="https://github.com/user-attachments/assets/20fb9a04-a217-4b24-ae67-41e8795ca4bc" alt="Athenova Logo" width="80">
 <h1 align="center">Athenova</h1>
 </div>
 <p align="center">
 <b>Decentralize Knowledge. Empower Creators.</b>
 <br />
 </div>
-✨ The Vision
+
+**✨ The Vision**<br />
 Athenova is a DeFi-native launchpad for educational courses, built to break down the barriers between creators, their communities, and the value they generate together. We're replacing traditional gatekeepers with a transparent, community-driven ecosystem where:
 Educators can fund their ambitious projects without seeking venture capital.
 Backers become co-owners, sharing in the financial success of courses they believe in.
 Learners access high-quality content through a seamless, Web3-native experience.
 This is more than just a course platform; it's a new economy for knowledge.
-🚀 Core Features
-🗣️ Decentralized Crowdfunding: Creators launch campaigns to raise funds in crypto directly from their community. No middlemen, no opaque processes.
-🎟️ Tokenized Ownership & Revenue Share: Backers receive unique Investor Share NFTs representing their stake. These NFTs aren't just collectibles; they are keys to a share of future revenue from course sales and secondary market royalties, distributed automatically and transparently on-chain.
-🗳️ Community Governance: Backers use their NFT stake to vote on project milestones. This ensures creators are accountable to the community that funded them, and funds are released as progress is made.
-🛍️ Integrated NFT Marketplace: A dedicated secondary market to trade both Investor Share NFTs and Course Access NFTs. This provides liquidity for backers and allows access to be transferred.
-✍️ Intuitive Course Editor: A clean, powerful, Notion-like editor allows creators to build rich, engaging course content with Markdown, images, and videos.
-🔐 Token-Gated Access: Course content is exclusively and verifiably accessible to wallets holding the correct Course Access NFT.
+
+**🚀 Core Features**<br />
+🗣️ Decentralized Crowdfunding: Creators launch campaigns to raise funds in crypto directly from their community. No middlemen, no opaque processes.<br />
+🎟️ Tokenized Ownership & Revenue Share: Backers receive unique Investor Share NFTs representing their stake. These NFTs aren't just collectibles; they are keys to a share of future revenue from course sales and secondary market royalties, distributed automatically and transparently on-chain.<br />
+🗳️ Community Governance: Backers use their NFT stake to vote on project milestones. This ensures creators are accountable to the community that funded them, and funds are released as progress is made.<br />
+🛍️ Integrated NFT Marketplace: A dedicated secondary market to trade both Investor Share NFTs and Course Access NFTs. This provides liquidity for backers and allows access to be transferred.<br />
+✍️ Intuitive Course Editor: A clean, powerful, Notion-like editor allows creators to build rich, engaging course content with Markdown, images, and videos.<br />
+🔐 Token-Gated Access: Course content is exclusively and verifiably accessible to wallets holding the correct Course Access NFT.<br />
 
 🏁 Getting Started
 Ready to build the future of education? Follow these steps to get a local instance of Athenova up and running.
