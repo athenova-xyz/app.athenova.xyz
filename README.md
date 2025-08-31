@@ -31,7 +31,7 @@ Yarn or npm
 A Web3 wallet extension like MetaMask
 Installation
 Clone the repository:
-git clone [https://github.com/athenova-inc/app.athenova.xyz](https://github.com/athenova-inc/app.athenova.xyz)
+git clone [https://github.com/athenova-xyz/app.athenova.xyz](https://github.com/athenova-xyz/app.athenova.xyz)
 cd athenova
 
 
