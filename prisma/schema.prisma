@@ -1,0 +1,11 @@
+// Prisma schema
+// Adjust datasource provider & url in .env
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // change to sqlite/mysql/sqlserver/mongodb if needed
+  url      = env("DATABASE_URL")
+}
