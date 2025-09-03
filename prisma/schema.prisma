@@ -9,3 +9,35 @@ datasource db {
   provider = "postgresql" // change to sqlite/mysql/sqlserver/mongodb if needed
   url      = env("DATABASE_URL")
 }
+
+// --------------------------------------------------
+// User related enum & model
+// Users authenticate via their walletAddress (unique)
+// --------------------------------------------------
+
+enum UserRole {
+  CREATOR
+  BACKER
+  LEARNER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  walletAddress String    @unique @db.VarChar(64) // store lowercase checksum-normalized address
+  role          UserRole  @default(LEARNER)
+
+  username      String?   @unique // optional handle
+  displayName   String?
+  email         String?   @unique
+  avatarUrl     String?
+  bio           String?
+
+  lastLoginAt   DateTime?
+  metadata      Json?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([role])
+  @@index([createdAt])
+}
