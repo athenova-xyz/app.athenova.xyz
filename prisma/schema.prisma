@@ -26,9 +26,9 @@ model User {
   walletAddress String    @unique @db.VarChar(64) // store lowercase checksum-normalized address
   role          UserRole  @default(LEARNER)
 
-  username      String?   @unique // optional handle
+  username      String?   @unique @db.Citext // optional handle (case-insensitive)
   displayName   String?
-  email         String?   @unique
+  email         String?   @unique @db.Citext
   avatarUrl     String?
   bio           String?
 
