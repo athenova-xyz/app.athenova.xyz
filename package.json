@@ -11,9 +11,14 @@
   "dependencies": {
     "@prisma/client": "^6.15.0",
     "@prisma/extension-accelerate": "^2.0.2",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.447.0",
     "next": "15.5.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "tailwind-merge": "^2.5.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
