@@ -1,9 +1,5 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-// @ts-ignore - style modules may not have type declarations
-import '@blocknote/mantine/style.css'
-// @ts-ignore - font css
-import '@blocknote/core/fonts/inter.css'
 
 export default function MyEditor() {
   const [EditorComp, setEditorComp] = useState<React.ReactNode>(null)
