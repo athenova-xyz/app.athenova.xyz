@@ -41,3 +41,15 @@ model User {
   @@index([role])
   @@index([createdAt])
 }
+
+// Nonce model for SIWE challenge flow
+model Nonce {
+  id        String   @id @default(cuid())
+  hashed    String   @unique @db.VarChar(128)
+  used      Boolean  @default(false)
+  // expiry for the nonce
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
