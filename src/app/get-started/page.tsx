@@ -11,7 +11,15 @@ export default function GetStartedPage() {
 
   const handleLogin = () => {
     if (isConnected && address) {
-      console.log("User logged in with wallet:", address);
+      // Create or update a user profile on the server linked to this wallet
+      fetch(`/api/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: address }),
+      })
+        .then((r) => r.json())
+        .then((data) => console.log("user upsert result", data))
+        .catch((err) => console.error("create user error", err));
     }
   };
 

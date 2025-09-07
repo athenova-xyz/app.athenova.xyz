@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // change to sqlite/mysql/sqlserver/mongodb if needed
+  provider = "postgresql" // production: Postgres
   url      = env("DATABASE_URL")
 }
 
@@ -22,21 +22,21 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  walletAddress String    @unique @db.VarChar(64) // store lowercase checksum-normalized address
-  role          UserRole  @default(LEARNER)
+  id            String   @id @default(cuid())
+  walletAddress String   @unique @db.VarChar(64) // store lowercase checksum-normalized address
+  role          UserRole @default(LEARNER)
 
-  username      String?   @unique @db.Citext // optional handle (case-insensitive)
-  displayName   String?
-  email         String?   @unique @db.Citext
-  avatarUrl     String?
-  bio           String?
+  username    String? @unique @db.Citext // optional handle (case-insensitive)
+  displayName String?
+  email       String? @unique @db.Citext
+  avatarUrl   String?
+  bio         String?
 
-  lastLoginAt   DateTime?
-  metadata      Json?
+  lastLoginAt DateTime?
+  metadata    Json?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role])
   @@index([createdAt])
