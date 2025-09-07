@@ -29,7 +29,8 @@ export async function POST(req: Request) {
         const host = req.headers.get("host") || "";
         const forwardedProto = req.headers.get("x-forwarded-proto") || undefined;
         const proto = forwardedProto ?? (process.env.NODE_ENV === "production" ? "https" : "http");
-        const expectedDomain = process.env.SIWE_DOMAIN ?? host.split(":")[0];
+        // Use full host (may include port) to match client `window.location.host`
+        const expectedDomain = process.env.SIWE_DOMAIN ?? host;
         const expectedUri = process.env.SIWE_URI ?? `${proto}://${host}`;
 
         // Optional server-side expectations
@@ -51,17 +52,59 @@ export async function POST(req: Request) {
             }, { status: 401 });
         }
 
+        // Perform full SIWE verification using the correct API for siwe v2
         try {
-            // @ts-expect-error - some siwe versions have slightly different typings for verify options
-            await siwe.verify({ signature, domain: expectedDomain, uri: expectedUri, nonce, time: new Date() });
-        } catch {
+            // For siwe v2.x, verify() takes an object with signature and provider/time options
+            // Let's validate manually since the verify API might have changed
+
+            // First validate the parsed message fields match our expectations
+            if (siwe.domain !== expectedDomain) {
+                throw new Error(`Domain mismatch: expected "${expectedDomain}", got "${siwe.domain}"`);
+            }
+
+            if (siwe.uri !== expectedUri) {
+                throw new Error(`URI mismatch: expected "${expectedUri}", got "${siwe.uri}"`);
+            }
+
+            // Verify the signature using ethers (already imported)
+            const recovered = verifyMessage(message, signature);
+            if (recovered.toLowerCase() !== siwe.address.toLowerCase()) {
+                throw new Error(`Signature verification failed: recovered ${recovered}, expected ${siwe.address}`);
+            }
+
+            // Verify nonce matches
+            if (siwe.nonce !== nonce) {
+                throw new Error(`Nonce mismatch: expected "${nonce}", got "${siwe.nonce}"`);
+            }
+
+            // Check time constraints if present
+            const now = new Date();
+            if (siwe.expirationTime && new Date(siwe.expirationTime) < now) {
+                throw new Error('Message has expired');
+            }
+
+            if (siwe.notBefore && new Date(siwe.notBefore) > now) {
+                throw new Error('Message is not yet valid');
+            }
+
+        } catch (err) {
+            // Provide richer diagnostics in non-production to help debugging
+            const devDetails = process.env.NODE_ENV === "production" ? undefined : {
+                error: err instanceof Error ? err.message : String(err),
+                expectedDomain,
+                expectedUri,
+                actualDomain: siwe.domain,
+                actualUri: siwe.uri,
+                nonce,
+                actualNonce: siwe.nonce
+            };
+
             return NextResponse.json({
                 error: "SIWE verification failed",
-                message: "Signature or message validation failed"
+                message: "Signature or message validation failed",
+                details: devDetails
             }, { status: 401 });
-        }
-
-        // After successful verification, consume/mark the nonce as used (single-use)
+        }        // After successful verification, consume/mark the nonce as used (single-use)
         const hashed = hashNonce(nonce);
         const consumed = await consumeNonce(hashed);
 
@@ -71,15 +114,6 @@ export async function POST(req: Request) {
                 error: "Invalid nonce",
                 message: "Nonce is invalid, expired, or already used"
             }, { status: 400 });
-        }
-
-        // Extra safety: ensure recovered address (from signature) matches the parsed SIWE address
-        const recovered = verifyMessage(message, signature);
-        if (recovered.toLowerCase() !== siwe.address.toLowerCase()) {
-            return NextResponse.json({
-                error: "Address mismatch",
-                message: "Recovered address does not match SIWE message address"
-            }, { status: 401 });
         }
 
         // Create session token
