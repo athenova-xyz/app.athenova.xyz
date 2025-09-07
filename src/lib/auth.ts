@@ -2,7 +2,13 @@ import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import prisma from "@/lib/prisma";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev-secret";
+const envJwt = process.env.JWT_SECRET;
+if (process.env.NODE_ENV === "production" && (!envJwt || envJwt.trim() === "")) {
+    throw new Error("JWT_SECRET must be set in production environment");
+}
+
+// Use provided secret in all environments; fall back to a non-empty dev value in non-production
+const JWT_SECRET = envJwt ?? "local-dev-secret";
 export const COOKIE_NAME = "athena_session";
 
 export function signSession(payload: Record<string, unknown>) {
