@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@blocknote/core": "^0.37.0",
+    "@blocknote/mantine": "^0.37.0",
+    "@blocknote/react": "^0.37.0",
+  "@hocuspocus/provider": "^2.15.2",
     "@prisma/client": "^6.15.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@radix-ui/react-slot": "^1.2.3",
