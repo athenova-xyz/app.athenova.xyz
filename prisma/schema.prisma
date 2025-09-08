@@ -39,41 +39,41 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Relations
-  documents     Document[]
+  courses     Course[]
 
   @@index([role])
   @@index([createdAt])
 }
 
 // --------------------------------------------------
-// Document model (for rich text editor autosave/publish)
+// Course model (for rich text editor autosave/publish)
 // - content: last committed JSON document (BlockNote JSON)
 // - draft: optional in-progress autosave buffer (not yet committed)
 // - plainText: denormalized text for search/snippets
 // --------------------------------------------------
 
-enum DocumentStatus {
+enum CourseStatus {
   DRAFT
   PUBLISHED
   ARCHIVED
 }
 
-model Document {
-  id         String          @id @default(cuid())
-  title      String?         @db.VarChar(256)
-  slug       String?         @unique @db.VarChar(256)
-  authorId   String?
-  author     User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  status     DocumentStatus  @default(DRAFT)
-  version    Int             @default(1)
+model Course {
+  id         String        @id @default(cuid())
+  title      String?       @db.VarChar(256)
+  slug       String?       @unique @db.VarChar(256)
+  authorId   String
+  author     User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status     CourseStatus  @default(DRAFT)
+  version    Int           @default(1)
 
-  content    Json            // committed content
-  draft      Json?           // latest autosave (not yet committed)
-  plainText  String?         @db.Text
+  content    Json          // committed content
+  draft      Json?         // latest autosave (not yet committed)
+  plainText  String?       @db.Text
 
   publishedAt DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([authorId])
   @@index([status])
