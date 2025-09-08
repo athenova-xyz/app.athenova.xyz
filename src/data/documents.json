@@ -1,0 +1,14 @@
+[
+  {
+    "id": "doc1",
+    "title": "course draft",
+    "status": "Draft",
+    "updatedAt": "2025-09-08 10:00"
+  },
+  {
+    "id": "doc2",
+    "title": "course test 1",
+    "status": "Published",
+    "updatedAt": "2025-09-07 15:30"
+  }
+]
