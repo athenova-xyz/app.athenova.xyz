@@ -2,6 +2,7 @@
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -80,10 +81,10 @@ export default function GetStartedPage() {
             </div>
 
             <div className="mt-7 text-center text-xs text-muted-foreground">
-              Don&apos;t Have an account? LMAO.{" "}
-              <a href="#" className="text-blue-500 underline">
+              Don&apos;t have an account?{" "}
+              <Link href="/signup" className="athena-link">
                 Sign up
-              </a>
+              </Link>
             </div>
           </div>
         </div>
