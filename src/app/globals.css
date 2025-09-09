@@ -46,6 +46,11 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
+  /* Tailwind-like blue tokens for components that expect a primary blue */
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  /* Auth/card border color (slightly deeper than #e6f4ff) */
+  --auth-border: #cfe8ff;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -118,5 +123,22 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .athena-link {
+    color: var(--blue-500);
+    text-decoration: underline;
+  }
+  .athena-link:hover {
+    color: var(--blue-600);
+  }
+  /* border utility for auth card */
+  .border-auth {
+    border-color: var(--auth-border);
+  }
+  .bg-auth {
+    background-color: var(--auth-border);
   }
 }

@@ -1,63 +1,92 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect } from "wagmi";
+import Image from "next/image";
+import { useAccount } from "wagmi";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export default function GetStartedPage() {
-  const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
-
-  const handleLogin = () => {
-    if (isConnected && address) {
-      console.log("User logged in with wallet:", address);
-    }
-  };
+  useAccount();
 
   return (
     <main
       className={cn(
-        "min-h-dvh flex flex-col items-center justify-center px-6 py-20",
-        "bg-gradient-to-b from-background to-muted"
+        "min-h-screen flex items-center justify-center bg-background px-2 py-10"
       )}
     >
-      <div className="flex flex-col items-center text-center gap-8 max-w-md">
-        <header className="space-y-3">
-          <h1 className="text-3xl font-semibold tracking-tight">Get Started</h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Connect your wallet to begin. You’ll be able to create a profile,
-            back creators, and track your learning journey — all from one place.
-          </p>
-        </header>
-
-        <div className="w-full max-w-md space-y-4">
-          {!isConnected ? (
-            <ConnectButton />
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg border bg-card text-card-foreground">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Connected as:
-                </p>
-                <p className="font-mono text-xs break-all">{address}</p>
+      <div className="w-full max-w-md">
+        <div className="relative">
+          {/* Main card: blue border with rounded corners */}
+          <div className="rounded-2xl border border-auth bg-card shadow-sm p-10">
+            {/* Logo inline with title */}
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/logo.png"
+                  alt="Athenova logo"
+                  className="rounded-lg bg-card"
+                  width={40}
+                  height={40}
+                  priority
+                />
+                <h2 className="text-xl font-semibold text-foreground">
+                  Athenova
+                </h2>
               </div>
-              <div className="flex gap-2">
-                <Button onClick={handleLogin} className="flex-1">
-                  Login
-                </Button>
-                <Button onClick={() => disconnect()} variant="outline">
-                  Disconnect
-                </Button>
-              </div>
+              <p className="mt-2 text-md text-muted-foreground font-normal">
+                Welcome Back
+              </p>
+              <p className="text-xs text-muted-foreground font-normal">
+                Log in to your account
+              </p>
             </div>
-          )}
-        </div>
 
-        <p className="text-[11px] text-muted-foreground pt-4">
-          No email. No password. Just your wallet. Signing requests will appear
-          when needed.
-        </p>
+            <div className="mt-8 space-y-4">
+              <Button
+                className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
+                variant="outline"
+                type="button"
+              >
+                Log in with Google
+              </Button>
+
+              <ConnectButton.Custom>
+                {({ openConnectModal }) => (
+                  <Button
+                    onClick={openConnectModal}
+                    className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
+                    variant="outline"
+                    type="button"
+                  >
+                    Connect Wallet
+                  </Button>
+                )}
+              </ConnectButton.Custom>
+
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 h-px border-auth bg-auth"></div>
+                <span className="text-xs text-muted-foreground">OR</span>
+                <div className="flex-1 h-px border-auth bg-auth"></div>
+              </div>
+
+              <Button
+                className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
+                variant="outline"
+                type="button"
+              >
+                Log in with Email
+              </Button>
+            </div>
+
+            <div className="mt-7 text-center text-xs text-muted-foreground">
+              Don&apos;t Have an account? LMAO.{" "}
+              <a href="#" className="text-blue-500 underline">
+                Sign up
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
