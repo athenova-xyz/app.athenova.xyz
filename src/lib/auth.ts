@@ -29,19 +29,24 @@ export function hashNonce(nonce: string) {
 
 export async function consumeNonce(hashed: string) {
     try {
-        // Find unused nonce that hasn't expired
-        const record = await prisma.nonce.findUnique({ where: { hashed } });
-        if (!record || record.used || new Date(record.expiresAt) < new Date()) {
-            return null;
-        }
-
-        // Mark nonce as used (single-use)
-        await prisma.nonce.update({
-            where: { hashed },
-            data: { used: true }
+        // Atomically mark a matching unused, unexpired nonce as used.
+        // This avoids a read-then-write race: updateMany will only affect rows
+        // where used = false and expiresAt > now(). If count is 0, nothing matched.
+        const now = new Date();
+        const result = await prisma.nonce.updateMany({
+            where: {
+                hashed,
+                used: false,
+                expiresAt: { gt: now },
+            },
+            data: { used: true, usedAt: now },
         });
 
-        return record;
+        if (result.count === 0) return null;
+
+        // Return the record as it now exists (marked used)
+        const updated = await prisma.nonce.findUnique({ where: { hashed } });
+        return updated ?? null;
     } catch {
         return null;
     }

@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
-import { verifyMessage } from "ethers";
 import { hashNonce, consumeNonce, signSession, COOKIE_NAME } from "@/lib/auth";
-import { SiweMessage } from "siwe";
+import { SiweMessage, type VerifyParams } from "siwe";
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { message, signature } = body ?? {};
+        let body: unknown;
+        try {
+            body = await req.json();
+        } catch {
+            return NextResponse.json({
+                error: "Invalid JSON",
+                message: "Request body must be valid JSON"
+            }, { status: 400 });
+        }
 
-        if (!message || !signature) {
+        const parsed = (body && typeof body === "object") ? (body as Record<string, unknown>) : {};
+        const message = parsed["message"] as unknown;
+        const signature = parsed["signature"] as unknown;
+
+        if (typeof message !== "string" || typeof signature !== "string" || !message || !signature) {
             return NextResponse.json({
                 error: "Missing required fields",
                 message: "Both message and signature are required"
@@ -26,12 +36,30 @@ export async function POST(req: Request) {
         }
 
         // Prepare expected values for SIWE verification
-        const host = req.headers.get("host") || "";
+        // Prefer the X-Forwarded-Host header (set by proxies) and fall back to Host.
+        const forwardedHostHeader = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
         const forwardedProto = req.headers.get("x-forwarded-proto") || undefined;
         const proto = forwardedProto ?? (process.env.NODE_ENV === "production" ? "https" : "http");
-        // Use full host (may include port) to match client `window.location.host`
-        const expectedDomain = process.env.SIWE_DOMAIN ?? host;
-        const expectedUri = process.env.SIWE_URI ?? `${proto}://${host}`;
+
+        // In production require SIWE_DOMAIN to be explicitly configured and use it exclusively.
+        let expectedDomain: string;
+        if (process.env.NODE_ENV === "production") {
+            if (process.env.SIWE_DOMAIN && process.env.SIWE_DOMAIN.trim() !== "") {
+                expectedDomain = process.env.SIWE_DOMAIN;
+            } else {
+                return NextResponse.json({
+                    error: "Server misconfiguration",
+                    message: "SIWE_DOMAIN must be set in production to validate incoming SIWE messages"
+                }, { status: 500 });
+            }
+        } else {
+            // In non-production prefer configured SIWE_DOMAIN or the forwarded host (including port)
+            // This matches how browsers set window.location.host during local dev (e.g., localhost:3000)
+            expectedDomain = process.env.SIWE_DOMAIN ?? forwardedHostHeader;
+        }
+
+        // Build expected URI from chosen proto and the forwarded host (preserves port if present)
+        const expectedUri = process.env.SIWE_URI ?? `${proto}://${forwardedHostHeader}`;
 
         // Optional server-side expectations
         const expectedChainId = process.env.SIWE_CHAIN_ID ? parseInt(process.env.SIWE_CHAIN_ID, 10) : undefined;
@@ -52,43 +80,26 @@ export async function POST(req: Request) {
             }, { status: 401 });
         }
 
-        // Perform full SIWE verification using the correct API for siwe v2
+        // Replace manual verification with SiweMessage.verify (siwe v2) which handles signature, nonce,
+        // time validation and EIP-1271 contract-wallet checks when a provider is supplied.
         try {
-            // For siwe v2.x, verify() takes an object with signature and provider/time options
-            // Let's validate manually since the verify API might have changed
+            // Build an ethers provider. Prefer configured RPC URL, otherwise fall back to a public mainnet RPC for chainId 1.
+            const rpcUrl = process.env.SIWE_RPC_URL || process.env.RPC_URL || (expectedChainId === 1 ? "https://cloudflare-eth.com" : undefined);
+            // Dynamically import ethers to avoid top-level environment issues in edge or serverless runtimes
+            const provider = rpcUrl ? new (await import("ethers")).JsonRpcProvider(rpcUrl) : undefined;
 
-            // First validate the parsed message fields match our expectations
-            if (siwe.domain !== expectedDomain) {
-                throw new Error(`Domain mismatch: expected "${expectedDomain}", got "${siwe.domain}"`);
-            }
+            const verifyOptions: VerifyParams = {
+                signature: signature as string,
+                domain: expectedDomain,
+                nonce: nonce as string,
+            };
 
-            if (siwe.uri !== expectedUri) {
-                throw new Error(`URI mismatch: expected "${expectedUri}", got "${siwe.uri}"`);
-            }
+            if (provider) (verifyOptions as unknown as { provider?: unknown }).provider = provider;
 
-            // Verify the signature using ethers (already imported)
-            const recovered = verifyMessage(message, signature);
-            if (recovered.toLowerCase() !== siwe.address.toLowerCase()) {
-                throw new Error(`Signature verification failed: recovered ${recovered}, expected ${siwe.address}`);
-            }
-
-            // Verify nonce matches
-            if (siwe.nonce !== nonce) {
-                throw new Error(`Nonce mismatch: expected "${nonce}", got "${siwe.nonce}"`);
-            }
-
-            // Check time constraints if present
-            const now = new Date();
-            if (siwe.expirationTime && new Date(siwe.expirationTime) < now) {
-                throw new Error('Message has expired');
-            }
-
-            if (siwe.notBefore && new Date(siwe.notBefore) > now) {
-                throw new Error('Message is not yet valid');
-            }
+            // siwe v2 verify will throw on failure
+            await siwe.verify(verifyOptions);
 
         } catch (err) {
-            // Provide richer diagnostics in non-production to help debugging
             const devDetails = process.env.NODE_ENV === "production" ? undefined : {
                 error: err instanceof Error ? err.message : String(err),
                 expectedDomain,
@@ -130,7 +141,8 @@ export async function POST(req: Request) {
 
         return response;
 
-    } catch {
+    } catch (err) {
+        console.error("siwe verify failed", err);
         return NextResponse.json({
             error: "Internal server error",
             message: "Failed to verify signature"

@@ -23,7 +23,7 @@ enum UserRole {
 
 model User {
   id            String   @id @default(cuid())
-  walletAddress String   @unique @db.VarChar(64) // store lowercase checksum-normalized address
+  walletAddress String   @unique @db.VarChar(64) // store lowercased 0x-prefixed hex (EIP-55 checksum not preserved)
   role          UserRole @default(LEARNER)
 
   username    String? @unique @db.Citext // optional handle (case-insensitive)
@@ -44,12 +44,13 @@ model User {
 
 // Nonce model for SIWE challenge flow
 model Nonce {
-  id        String   @id @default(cuid())
-  hashed    String   @unique @db.VarChar(128)
-  used      Boolean  @default(false)
+  id        String    @id @default(cuid())
+  hashed    String    @unique @db.VarChar(128)
+  used      Boolean   @default(false)
+  usedAt    DateTime?
   // expiry for the nonce
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([expiresAt])
 }

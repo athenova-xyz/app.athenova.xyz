@@ -1,19 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifySession, COOKIE_NAME } from "@/lib/auth";
+import { isAddress } from "ethers";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
         // Extract session token from cookie or Authorization header
-        const cookieHeader = req.headers.get("cookie") || "";
-        const cookies = Object.fromEntries(
-            cookieHeader.split(";").map((c) => {
-                const [k, ...v] = c.split("=");
-                return [k?.trim(), decodeURIComponent((v || []).join("=") || "")];
-            })
-        );
-
-        const tokenFromCookie = cookies[COOKIE_NAME];
+        const tokenFromCookie = req.cookies.get(COOKIE_NAME)?.value;
         const authHeader = req.headers.get("authorization") || "";
         const tokenFromHeader = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : undefined;
 
@@ -36,7 +29,14 @@ export async function POST(req: Request) {
         }
 
         // Create or update user with verified wallet address from session
-        const address = (session.walletAddress as string).toLowerCase();
+        const rawAddress = session.walletAddress as string;
+
+        // Validate format server-side
+        if (typeof rawAddress !== "string" || !isAddress(rawAddress)) {
+            return NextResponse.json({ error: "invalid walletAddress" }, { status: 400 });
+        }
+
+        const address = rawAddress.toLowerCase();
 
         const user = await prisma.user.upsert({
             where: { walletAddress: address },
@@ -45,6 +45,7 @@ export async function POST(req: Request) {
                 walletAddress: address,
                 lastLoginAt: new Date()
             },
+            select: { id: true, walletAddress: true, role: true, lastLoginAt: true, createdAt: true }
         });
 
         return NextResponse.json({
@@ -58,10 +59,14 @@ export async function POST(req: Request) {
             }
         });
 
-    } catch {
+    } catch (err) {
+        // Generate a short error id for observability and avoid returning raw errors to clients
+        const eid = (globalThis as unknown as { crypto?: { randomUUID?: () => string } }).crypto?.randomUUID?.() ?? Date.now().toString();
+        console.error(`/api/users POST error [${eid}]`, err);
         return NextResponse.json({
-            error: "Internal server error",
-            message: "Failed to create or update user profile"
+            error: "internal server error",
+            message: "Failed to create or update user profile",
+            eid
         }, { status: 500 });
     }
 }

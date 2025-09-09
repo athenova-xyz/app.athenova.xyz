@@ -1,8 +1,7 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect } from "wagmi";
-import { useSignMessage } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { useState } from "react";
 export default function GetStartedPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<{
@@ -40,7 +40,7 @@ export default function GetStartedPage() {
         statement: "Sign in with Ethereum to Athenova",
         uri: window.location.origin,
         version: "1",
-        chainId: 1, // Ethereum mainnet - adjust as needed
+        chainId: chainId ?? 1,
         nonce: nonce,
       });
 
@@ -54,6 +54,7 @@ export default function GetStartedPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: messageString, signature }),
+        credentials: "include",
       });
 
       if (!verifyResponse.ok) {
@@ -82,10 +83,27 @@ export default function GetStartedPage() {
     }
   };
 
-  const handleLogout = () => {
-    setUserProfile(null);
+  const handleLogout = async () => {
+    setIsLoading(true);
     setError(null);
-    disconnect();
+    try {
+      const resp = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => null);
+        throw new Error(err?.message || "Failed to logout");
+      }
+    } catch (e) {
+      // Log and continue with client-side cleanup to avoid blocking UX
+      console.error("Logout request failed", e);
+    } finally {
+      setUserProfile(null);
+      setError(null);
+      disconnect();
+      setIsLoading(false);
+    }
   };
 
   return (

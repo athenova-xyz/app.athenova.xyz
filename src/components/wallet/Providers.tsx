@@ -30,20 +30,21 @@ const projectId = (
 // In production we require a WalletConnect project id. In development we
 // silently omit the WalletConnect connector so local testing doesn't need it.
 if (process.env.NODE_ENV === "production" && !projectId) {
-  throw new Error(
-    "Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID environment variable.\n" +
-      "Set NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID in your production environment to enable WalletConnect."
+  // Don't throw at module init in a client component; warn and omit WalletConnect.
+  // CI/CD should enforce presence of NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID before deploy.
+  // Throwing here would break any page that imports this file.
+  console.warn(
+    "WalletConnect disabled: missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
   );
 }
 
 // Build the wallets array conditionally — include WalletConnect only when a
 // projectId is provided. This avoids silently shipping a broken WalletConnect
 // configuration in development.
-const recommendedWallets = [metaMaskWallet, rainbowWallet, coinbaseWallet];
-if (projectId) {
-  // Insert WalletConnect among recommended wallets when available
-  recommendedWallets.splice(2, 0, walletConnectWallet);
-}
+const baseWallets = [metaMaskWallet, rainbowWallet, coinbaseWallet];
+const recommendedWallets = projectId
+  ? [metaMaskWallet, rainbowWallet, walletConnectWallet, coinbaseWallet]
+  : baseWallets;
 
 // Build connectors options. Use the library's parameter type so we don't have
 // to resort to `any` and ESLint complaints. When no projectId is provided we
@@ -63,12 +64,15 @@ const connectors = connectorsForWallets(
   connectorOptions
 );
 
+// Note: cookieStorage is fine for client-side persistence, but if you need
+// server-side hydration of connectors in App Router, wire Next.js `cookies()` into
+// the configuration. Otherwise you may observe connector hydration flicker.
 const config = createConfig({
   connectors,
   chains: [mainnet, sepolia],
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [mainnet.id]: http(process.env.NEXT_PUBLIC_MAINNET_RPC_URL),
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL),
   },
   storage: createStorage({
     storage: cookieStorage,
