@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 const envJwt = process.env.JWT_SECRET;
 if (process.env.NODE_ENV === "production" && (!envJwt || envJwt.trim() === "")) {

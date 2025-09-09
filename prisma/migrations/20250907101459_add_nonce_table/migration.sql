@@ -4,6 +4,7 @@ CREATE TABLE "public"."Nonce" (
     -- Store a SHA-256 hex digest (64 chars). Use fixed-length to catch malformed writes early.
     "hashed" CHAR(64) NOT NULL,
     "used" BOOLEAN NOT NULL DEFAULT false,
+    "usedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

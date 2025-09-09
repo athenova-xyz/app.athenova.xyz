@@ -1,7 +1,11 @@
 import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { verifySession, COOKIE_NAME } from "@/lib/auth";
-import { isAddress } from "ethers";
+
+// Lightweight wallet address validator: 0x followed by 40 hex chars (EIP-55 checksum not enforced here)
+const isHexAddress = (value: unknown): value is string => {
+    return typeof value === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value);
+};
 
 export async function POST(req: NextRequest) {
     try {
@@ -31,8 +35,8 @@ export async function POST(req: NextRequest) {
         // Create or update user with verified wallet address from session
         const rawAddress = session.walletAddress as string;
 
-        // Validate format server-side
-        if (typeof rawAddress !== "string" || !isAddress(rawAddress)) {
+        // Validate format server-side (0x + 40 hex chars)
+        if (!isHexAddress(rawAddress)) {
             return NextResponse.json({ error: "invalid walletAddress" }, { status: 400 });
         }
 

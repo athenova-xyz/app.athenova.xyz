@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { randomBytes } from "crypto";
 import { hashNonce } from "@/lib/auth";
 

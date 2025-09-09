@@ -39,7 +39,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  documents     Document[]
+  documents Document[]
 
   @@index([role])
   @@index([createdAt])
@@ -48,7 +48,7 @@ model User {
 // Nonce model for SIWE challenge flow
 model Nonce {
   id        String    @id @default(cuid())
-  hashed    String    @unique @db.VarChar(128)
+  hashed    String    @unique @db.Char(64)
   used      Boolean   @default(false)
   usedAt    DateTime?
   // expiry for the nonce
@@ -72,21 +72,21 @@ enum DocumentStatus {
 }
 
 model Document {
-  id         String          @id @default(cuid())
-  title      String?         @db.VarChar(256)
-  slug       String?         @unique @db.VarChar(256)
-  authorId   String?
-  author     User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  status     DocumentStatus  @default(DRAFT)
-  version    Int             @default(1)
+  id       String         @id @default(cuid())
+  title    String?        @db.VarChar(256)
+  slug     String?        @unique @db.VarChar(256)
+  authorId String?
+  author   User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  status   DocumentStatus @default(DRAFT)
+  version  Int            @default(1)
 
-  content    Json            // committed content
-  draft      Json?           // latest autosave (not yet committed)
-  plainText  String?         @db.Text
+  content   Json // committed content
+  draft     Json? // latest autosave (not yet committed)
+  plainText String? @db.Text
 
   publishedAt DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([authorId])
   @@index([status])
