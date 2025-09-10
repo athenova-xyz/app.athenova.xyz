@@ -72,9 +72,21 @@ export default function GetStartedPage() {
       if (userResponse.ok) {
         const userData = await userResponse.json();
         setUserProfile(userData.user);
+      } else if (userResponse.status === 409) {
+        const meResp = await fetch("/api/users/me", { credentials: "include" });
+        if (meResp.ok) {
+          const me = await meResp.json();
+          setUserProfile(me.user);
+        } else {
+          throw new Error("Account exists but could not fetch profile");
+        }
       } else {
-        const errorData = await userResponse.json();
-        throw new Error(errorData.message || "Failed to create user profile");
+        let errorMsg = "Failed to create user profile";
+        try {
+          const errorData = await userResponse.json();
+          errorMsg = errorData.message || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -111,7 +123,7 @@ export default function GetStartedPage() {
   return (
     <main
       className={cn(
-        "min-h-screen flex items-center justify-center bg-background px-2 py-10"
+        "min-h-screen min-h-[100dvh] flex items-center justify-center bg-background px-2 py-10"
       )}
     >
       <div className="w-full max-w-md">
@@ -122,11 +134,10 @@ export default function GetStartedPage() {
             <div className="flex flex-col items-center gap-2 text-center">
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo.png"
-                  alt="Athenova logo"
-                  className="rounded-lg bg-card"
-                  width={40}
-                  height={40}
+                  src="/Logo.png"
+                  alt="Athenova"
+                  width={56}
+                  height={56}
                   priority
                 />
                 <h2 className="text-xl font-semibold text-foreground">
@@ -188,8 +199,12 @@ export default function GetStartedPage() {
                   </div>
 
                   {error && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                      <p className="text-sm text-red-800">{error}</p>
+                    <div
+                      role="alert"
+                      aria-live="polite"
+                      className="p-3 rounded-lg bg-destructive/10 border border-destructive/20"
+                    >
+                      <p className="text-sm text-destructive">{error}</p>
                     </div>
                   )}
 
@@ -197,6 +212,7 @@ export default function GetStartedPage() {
                     <Button
                       onClick={handleLogin}
                       className="flex-1"
+                      type="button"
                       disabled={isLoading}
                     >
                       {isLoading
@@ -207,7 +223,7 @@ export default function GetStartedPage() {
                       Disconnect
                     </Button>
                   </div>
-                  <p className="mt-2 text-md text-muted-foreground font-normal">
+                  <p className="mt-2 text-base text-muted-foreground font-normal">
                     Welcome Back
                   </p>
                   <p className="text-xs text-muted-foreground font-normal">
@@ -225,18 +241,20 @@ export default function GetStartedPage() {
                   Log in with Google
                 </Button>
 
-                <ConnectButton.Custom>
-                  {({ openConnectModal }) => (
-                    <Button
-                      onClick={openConnectModal}
-                      className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
-                      variant="outline"
-                      type="button"
-                    >
-                      Connect Wallet
-                    </Button>
-                  )}
-                </ConnectButton.Custom>
+                {!isConnected && (
+                  <ConnectButton.Custom>
+                    {({ openConnectModal }) => (
+                      <Button
+                        onClick={openConnectModal}
+                        className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
+                        variant="outline"
+                        type="button"
+                      >
+                        Connect Wallet
+                      </Button>
+                    )}
+                  </ConnectButton.Custom>
+                )}
 
                 <div className="flex items-center gap-3 my-1">
                   <div className="flex-1 h-px border-auth bg-auth"></div>
