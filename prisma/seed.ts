@@ -12,11 +12,11 @@ async function main() {
     Array.from({ length: 5 }).map(() =>
       prisma.user.create({
         data: {
-          walletAddress: getAddress(faker.finance.ethereumAddress()),
+          walletAddress: faker.helpers.unique(() => getAddress(faker.finance.ethereumAddress())),
           role: 'CREATOR',
-          username: faker.internet.username().toLowerCase(),
+          username: faker.helpers.unique(() => faker.internet.username().toLowerCase()),
           displayName: faker.person.fullName(),
-          email: faker.internet.email().toLowerCase(),
+          email: faker.helpers.unique(() => faker.internet.email().toLowerCase()),
           avatarUrl: faker.image.avatar(),
           bio: faker.lorem.sentence(),
           metadata: {},
