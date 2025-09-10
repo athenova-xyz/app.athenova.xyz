@@ -1,17 +1,108 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
+import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export default function GetStartedPage() {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const chainId = useChainId();
+  const { signMessageAsync } = useSignMessage();
+  const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<{
+    id: string;
+    walletAddress: string;
+    role: string;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = () => {
-    if (isConnected && address) {
-      console.log("User logged in with wallet:", address);
+  const handleLogin = async () => {
+    if (!isConnected || !address) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Step 1: Get a nonce from the server
+      const nonceResponse = await fetch("/api/auth/nonce");
+      if (!nonceResponse.ok) throw new Error("Failed to get nonce");
+
+      const { nonce } = await nonceResponse.json();
+
+      // Step 2: Create a SIWE message
+      const message = new SiweMessage({
+        domain: window.location.host,
+        address: address,
+        statement: "Sign in with Ethereum to Athenova",
+        uri: window.location.origin,
+        version: "1",
+        chainId: chainId ?? 1,
+        nonce: nonce,
+      });
+
+      const messageString = message.prepareMessage();
+
+      // Step 3: Sign the message
+      const signature = await signMessageAsync({ message: messageString });
+
+      // Step 4: Verify the signature and get session
+      const verifyResponse = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageString, signature }),
+        credentials: "include",
+      });
+
+      if (!verifyResponse.ok) {
+        throw new Error("Failed to verify signature");
+      }
+
+      // Step 5: Create user profile (session is now set via cookie)
+      const userResponse = await fetch("/api/users", {
+        method: "POST",
+        credentials: "include", // Include cookies
+      });
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUserProfile(userData.user);
+      } else {
+        const errorData = await userResponse.json();
+        throw new Error(errorData.message || "Failed to create user profile");
+      }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Login failed. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const resp = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => null);
+        throw new Error(err?.message || "Failed to logout");
+      }
+    } catch (e) {
+      // Log and continue with client-side cleanup to avoid blocking UX
+      console.error("Logout request failed", e);
+    } finally {
+      setUserProfile(null);
+      setError(null);
+      disconnect();
+      setIsLoading(false);
     }
   };
 
@@ -26,15 +117,49 @@ export default function GetStartedPage() {
         <header className="space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight">Get Started</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Connect your wallet to begin. You’ll be able to create a profile,
-            back creators, and track your learning journey — all from one place.
+            Connect your wallet to begin. You&apos;ll be able to create a
+            profile, back creators, and track your learning journey — all from
+            one place.
           </p>
         </header>
 
         <div className="w-full max-w-md space-y-4">
           {!isConnected ? (
             <ConnectButton />
+          ) : userProfile ? (
+            // User is logged in and profile created
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border bg-green-50 border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <p className="text-sm font-medium text-green-800">
+                    Profile Created Successfully!
+                  </p>
+                </div>
+                <p className="text-xs text-green-600">Welcome to Athenova</p>
+                <div className="mt-3 p-2 bg-white rounded border">
+                  <p className="text-xs text-gray-600 mb-1">User ID:</p>
+                  <p className="font-mono text-xs break-all">
+                    {userProfile.id}
+                  </p>
+                  <p className="text-xs text-gray-600 mb-1 mt-2">Wallet:</p>
+                  <p className="font-mono text-xs break-all">
+                    {userProfile.walletAddress}
+                  </p>
+                  <p className="text-xs text-gray-600 mb-1 mt-2">Role:</p>
+                  <p className="text-xs">{userProfile.role}</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                className="w-full"
+              >
+                Logout & Disconnect
+              </Button>
+            </div>
           ) : (
+            // User is connected but not logged in yet
             <div className="space-y-4">
               <div className="p-4 rounded-lg border bg-card text-card-foreground">
                 <p className="text-sm text-muted-foreground mb-2">
@@ -42,9 +167,20 @@ export default function GetStartedPage() {
                 </p>
                 <p className="font-mono text-xs break-all">{address}</p>
               </div>
+
+              {error && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                  <p className="text-sm text-red-800">{error}</p>
+                </div>
+              )}
+
               <div className="flex gap-2">
-                <Button onClick={handleLogin} className="flex-1">
-                  Login
+                <Button
+                  onClick={handleLogin}
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Profile..." : "Login & Create Profile"}
                 </Button>
                 <Button onClick={() => disconnect()} variant="outline">
                   Disconnect

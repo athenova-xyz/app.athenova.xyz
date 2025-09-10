@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // change to sqlite/mysql/sqlserver/mongodb if needed
+  provider = "postgresql" // production: Postgres
   url      = env("DATABASE_URL")
 }
 
@@ -22,27 +22,40 @@ enum UserRole {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  walletAddress String    @unique @db.VarChar(64) // store lowercase checksum-normalized address
-  role          UserRole  @default(LEARNER)
+  id            String   @id @default(cuid())
+  walletAddress String   @unique @db.VarChar(64) // store lowercased 0x-prefixed hex (EIP-55 checksum not preserved)
+  role          UserRole @default(LEARNER)
 
-  username      String?   @unique @db.Citext // optional handle (case-insensitive)
-  displayName   String?
-  email         String?   @unique @db.Citext
-  avatarUrl     String?
-  bio           String?
+  username    String? @unique @db.Citext // optional handle (case-insensitive)
+  displayName String?
+  email       String? @unique @db.Citext
+  avatarUrl   String?
+  bio         String?
 
-  lastLoginAt   DateTime?
-  metadata      Json?
+  lastLoginAt DateTime?
+  metadata    Json?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   courses     Course[]
 
   @@index([role])
   @@index([createdAt])
+}
+
+// Nonce model for SIWE challenge flow
+model Nonce {
+  id        String    @id @default(cuid())
+  hashed    String    @unique @db.Char(64)
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  // expiry for the nonce
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
 }
 
 // --------------------------------------------------
