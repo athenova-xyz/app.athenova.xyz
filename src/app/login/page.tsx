@@ -29,19 +29,49 @@ export default function GetStartedPage() {
     setError(null);
 
     try {
+      // Step 1: Get nonce from the server
       const nonceResponse = await fetch("/api/auth/nonce");
       if (!nonceResponse.ok) throw new Error("Failed to get nonce");
 
       const { nonce } = await nonceResponse.json();
 
+      // Step 2: Create a SIWE message
+      // read client-visible env vars (NEXT_PUBLIC_*) and enforce in production
+      const envDomain = process.env.NEXT_PUBLIC_SIWE_DOMAIN;
+      const envUri = process.env.NEXT_PUBLIC_SIWE_URI;
+      const envStatement = process.env.NEXT_PUBLIC_SIWE_STATEMENT;
+      const envChainId = process.env.NEXT_PUBLIC_SIWE_CHAIN_ID;
+
+      if (process.env.NODE_ENV === "production") {
+        if (!envDomain || !envUri) {
+          setError(
+            "SIWE configuration missing. NEXT_PUBLIC_SIWE_DOMAIN and NEXT_PUBLIC_SIWE_URI must be set in production."
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const domain = envDomain ?? window.location.host;
+      const uri = envUri ?? window.location.origin;
+      const statement = envStatement ?? "Sign in with Ethereum to Athenova";
+
+      let parsedChainId: number | undefined = undefined;
+      if (envChainId) {
+        const n = parseInt(envChainId, 10);
+        if (!Number.isNaN(n)) parsedChainId = n;
+      }
+      const finalChainId =
+        parsedChainId ?? (typeof chainId === "number" ? chainId : 1);
+
       const message = new SiweMessage({
-        domain: window.location.host,
+        domain,
         address: address,
-        statement: "Sign in with Ethereum to Athenova",
-        uri: window.location.origin,
+        statement,
+        uri,
         version: "1",
-        chainId: chainId ?? 1,
-        nonce: nonce,
+        chainId: finalChainId,
+        nonce,
       });
 
       const messageString = message.prepareMessage();
