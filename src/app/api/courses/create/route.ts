@@ -6,7 +6,7 @@ export async function POST(request: Request) {
         const formData = await request.formData();
         const title = String(formData.get("title") ?? "").trim();
         const description = String(formData.get("description") ?? "").trim();
-        
+
         // Server-side validation
         if (!title || title.length > 256) {
             return NextResponse.json({ success: false, error: "Invalid title" }, { status: 400 });
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         if (!description || description.length > 10000) {
             return NextResponse.json({ success: false, error: "Invalid description" }, { status: 400 });
         }
-        
+
         const result = await createCourse({ title, description });
         if (result.success) {
             // Redirect to courses list instead of JSON response
