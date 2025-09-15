@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,34 +12,25 @@ interface FormErrors {
   general?: string;
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? "Creating..." : "Create Course"}
-    </Button>
-  );
-}
-
 export function CourseForm() {
   const [errors, setErrors] = useState<FormErrors>({});
+  const [pending, setPending] = useState(false);
   const router = useRouter();
 
   const validateForm = (formData: FormData): FormErrors => {
     const errors: FormErrors = {};
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
+    const title = (formData.get("title") as string)?.trim() || "";
+    const description = (formData.get("description") as string)?.trim() || "";
 
     // Validate title length (DB column limit: 256 chars)
-    if (!title || title.trim().length === 0) {
+    if (!title) {
       errors.title = "Title is required";
     } else if (title.length > 256) {
       errors.title = "Title must be 256 characters or less";
     }
 
     // Validate description length (DB column limit: 10000 chars)
-    if (!description || description.trim().length === 0) {
+    if (!description) {
       errors.description = "Description is required";
     } else if (description.length > 10000) {
       errors.description = "Description must be 10,000 characters or less";
@@ -51,27 +41,34 @@ export function CourseForm() {
 
   const handleSubmit = async (formData: FormData) => {
     setErrors({});
-
-    // Client-side validation
-    const validationErrors = validateForm(formData);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
+    setPending(true);
 
     try {
+      // Client-side validation
+      const validationErrors = validateForm(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      // Trim input values before sending to server
+      const title = (formData.get("title") as string)?.trim() || "";
+      const description = (formData.get("description") as string)?.trim() || "";
+
       const result = await createCourse({
-        title: formData.get("title") as string,
-        description: formData.get("description") as string,
+        title,
+        description,
       });
 
       if (result.success) {
-        router.push("/courses");
+        router.push("/courses?created=1");
       } else {
         setErrors({ general: result.error || "Failed to create course" });
       }
     } catch {
       setErrors({ general: "An unexpected error occurred" });
+    } finally {
+      setPending(false);
     }
   };
 
@@ -119,7 +116,9 @@ export function CourseForm() {
           <p className="text-sm text-red-500">{errors.general}</p>
         )}
 
-        <SubmitButton />
+        <Button type="submit" disabled={pending}>
+          {pending ? "Creating..." : "Create Course"}
+        </Button>
       </form>
     </div>
   );

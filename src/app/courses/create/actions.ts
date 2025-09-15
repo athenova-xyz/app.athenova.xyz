@@ -27,7 +27,27 @@ async function getCurrentUser() {
 }
 
 export async function createCourse(data: { title: string; description: string }) {
-    const { title, description } = data;
+    const { title: rawTitle, description: rawDescription } = data;
+
+    // Server-side validation - trim and validate input
+    const title = rawTitle?.trim() || "";
+    const description = rawDescription?.trim() || "";
+
+    // Validate title
+    if (!title) {
+        return { success: false, error: "Course title is required" };
+    }
+    if (title.length > 256) {
+        return { success: false, error: "Course title must be 256 characters or less" };
+    }
+
+    // Validate description
+    if (!description) {
+        return { success: false, error: "Course description is required" };
+    }
+    if (description.length > 10000) {
+        return { success: false, error: "Course description must be 10,000 characters or less" };
+    }
 
     // Get the current authenticated user
     const user = await getCurrentUser();

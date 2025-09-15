@@ -25,7 +25,7 @@ INSERT INTO "User" (
     'Demo user for development and testing purposes',
     NOW(),
     NOW()
-) ON CONFLICT (id) DO NOTHING; -- Prevent duplicate inserts if run multiple times
+) ON CONFLICT DO NOTHING; -- Prevent duplicate inserts on any unique constraint if run multiple times
 
 -- Also handle case where the wallet address already exists
 INSERT INTO "User" (
@@ -41,7 +41,7 @@ INSERT INTO "User" (
     "updatedAt"
 ) VALUES (
     'demo-user-id-alt',
-    '0x8ba1f109551bd432803012645hac136c1c6734c0', -- Alternative demo wallet
+    '0x8ba1f109551bd432803012645aac136c1c6734c0', -- Alternative demo wallet
     'CREATOR',
     'demouser2',
     'Demo User 2',
@@ -50,4 +50,4 @@ INSERT INTO "User" (
     'Alternative demo user for development',
     NOW(),
     NOW()
-) ON CONFLICT (id) DO NOTHING;
+) ON CONFLICT DO NOTHING;
