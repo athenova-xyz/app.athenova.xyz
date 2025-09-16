@@ -2,6 +2,11 @@ import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 
+// RequestCookies interface compatible with Next.js cookies()
+interface RequestCookies {
+    get(name: string): { value: string } | undefined;
+}
+
 const envJwt = process.env.JWT_SECRET;
 if (process.env.NODE_ENV === "production" && (!envJwt || envJwt.trim() === "")) {
     throw new Error("JWT_SECRET must be set in production environment");
@@ -47,6 +52,28 @@ export async function consumeNonce(hashed: string) {
         // Return the record as it now exists (marked used)
         const updated = await prisma.nonce.findUnique({ where: { hashed } });
         return updated ?? null;
+    } catch {
+        return null;
+    }
+}
+
+// Helper to resolve the currently authenticated user from the session cookie.
+// This uses the same `verifySession` and `COOKIE_NAME` helpers and centralizes
+// the lookup so server code can import a single function.
+export async function getCurrentUserFromCookie(cookieStore: RequestCookies | Promise<RequestCookies> | undefined) {
+    try {
+        if (!cookieStore) return null;
+        const store = await cookieStore;
+        const token = store.get(COOKIE_NAME)?.value;
+        if (!token) return null;
+        const session = verifySession(token);
+        if (!session || typeof session.walletAddress !== "string") return null;
+        const addr = (session.walletAddress as string).toLowerCase();
+        // Prefer exact lowercased match; fallback to case-insensitive if needed
+        const user =
+            (await prisma.user.findUnique({ where: { walletAddress: addr } })) ??
+            (await prisma.user.findFirst({ where: { walletAddress: { equals: addr, mode: "insensitive" } } }));
+        return user ?? null;
     } catch {
         return null;
     }

@@ -39,7 +39,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  courses     Course[]
+  courses Course[]
 
   @@index([role])
   @@index([createdAt])
@@ -72,24 +72,20 @@ enum CourseStatus {
 }
 
 model Course {
-  id         String        @id @default(cuid())
-  title      String?       @db.VarChar(256)
-  slug       String?       @unique @db.VarChar(256)
-  authorId   String
-  author     User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  status     CourseStatus  @default(DRAFT)
-  version    Int           @default(1)
-
-  content    Json          // committed content
-  draft      Json?         // latest autosave (not yet committed)
-  plainText  String?       @db.Text
+  id          String       @id @default(cuid())
+  title       String       @db.VarChar(256)
+  description String       @db.Text
+  slug        String?      @unique @db.VarChar(256)
+  authorId    String
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status      CourseStatus @default(DRAFT)
+  version     Int          @default(1)
 
   publishedAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([authorId])
   @@index([status])
-  @@index([updatedAt])
   @@index([slug])
 }
