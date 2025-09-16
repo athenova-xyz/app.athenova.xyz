@@ -14,26 +14,29 @@ END $$;
 
 -- 2) Backfill `description` from legacy columns if present, otherwise set to empty string
 DO $$
-BEGIN
-  IF EXISTS (
+DECLARE
+  has_plain   boolean := EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema='public' AND table_name='Course' AND column_name='plainText'
-  ) THEN
+  );
+  has_content boolean := EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='Course' AND column_name='content'
+  );
+BEGIN
+  IF has_plain AND has_content THEN
+    UPDATE "public"."Course"
+    SET "description" = COALESCE("plainText", CAST("content" AS TEXT), '')
+    WHERE "description" IS NULL;
+  ELSIF has_plain THEN
     UPDATE "public"."Course"
     SET "description" = COALESCE("plainText", '')
     WHERE "description" IS NULL;
-
-  ELSIF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema='public' AND table_name='Course' AND column_name='content'
-  ) THEN
-    -- `content` may be JSON; cast to text if present
+  ELSIF has_content THEN
     UPDATE "public"."Course"
     SET "description" = COALESCE(CAST("content" AS TEXT), '')
     WHERE "description" IS NULL;
-
   ELSE
-    -- No legacy text columns found -- set to empty string where NULL
     UPDATE "public"."Course"
     SET "description" = ''
     WHERE "description" IS NULL;
