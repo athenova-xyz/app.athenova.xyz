@@ -16,19 +16,7 @@ import { CourseSchema, CourseInput } from "@/lib/schemas/course";
 
 
 export async function createCourse(data: CourseInput) {
-    // Defensively validate here as well to guarantee server-side enforcement
-    const parsed = CourseSchema.safeParse(data);
-    if (!parsed.success) {
-        const fieldErrors: Record<string, string[]> = {};
-        for (const issue of parsed.error.issues) {
-            const key = issue.path[0] as string;
-            fieldErrors[key] = fieldErrors[key] || [];
-            fieldErrors[key].push(issue.message);
-        }
-        return { success: false, errors: fieldErrors };
-    }
-
-    const { title, description } = parsed.data;
+    const { title, description } = data;
 
     // Get the current authenticated user from centralized auth helper
     const user = await getCurrentUserFromCookie(cookies());

@@ -38,6 +38,14 @@ export function CourseForm() {
 
     return errors;
   };
+  // NOTE: Prefer using the shared server Zod schema (`CourseSchema`) for
+  // validation to keep client and server in sync. Example (client-side):
+  //
+  // import { CourseSchema } from '@/lib/schemas/course'
+  // const parsed = CourseSchema.safeParse({ title, description })
+  // if (!parsed.success) { map parsed.error.issues into FormErrors }
+  //
+  // This ensures trimming and length rules are identical on both sides.
 
   const handleSubmit = async (formData: FormData) => {
     setErrors({});
