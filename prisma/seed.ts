@@ -12,7 +12,7 @@ async function main() {
     Array.from({ length: 5 }).map(() =>
       prisma.user.create({
         data: {
-          walletAddress: getAddress(faker.finance.ethereumAddress()),
+          walletAddress: getAddress(faker.finance.ethereumAddress()).toLowerCase(),
           role: 'CREATOR',
           username: faker.internet.username().toLowerCase(),
           displayName: faker.person.fullName(),

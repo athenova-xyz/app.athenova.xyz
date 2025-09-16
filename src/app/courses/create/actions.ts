@@ -5,6 +5,15 @@ import { getCurrentUserFromCookie } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { CourseSchema, CourseInput } from "@/lib/schemas/course";
 
+// NOTE: Zod enforces a maximum length for `description` (<= 10000 chars).
+// The DB currently defines `description` as TEXT (no length limit). To
+// guarantee consistency and avoid runtime rejections when Prisma writes to
+// the DB, add a DB-level constraint (either change the column to
+// `VARCHAR(10000)` or add `CHECK (char_length(description) <= 10000)`),
+// and then update `schema.prisma` and create a migration. This ensures the
+// DB cannot contain values that violate the Zod schema and keeps validations
+// consistent across application and database layers.
+
 
 export async function createCourse(data: CourseInput) {
     // Defensively validate here as well to guarantee server-side enforcement
@@ -22,7 +31,7 @@ export async function createCourse(data: CourseInput) {
     const { title, description } = parsed.data;
 
     // Get the current authenticated user from centralized auth helper
-    const user = await getCurrentUserFromCookie(await cookies());
+    const user = await getCurrentUserFromCookie(cookies());
 
     if (!user) {
         // In development only, provide helpful error message about demo user setup
