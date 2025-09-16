@@ -12,11 +12,11 @@ async function main() {
     Array.from({ length: 5 }).map(() =>
       prisma.user.create({
         data: {
-          walletAddress: faker.helpers.unique(() => getAddress(faker.finance.ethereumAddress())),
+          walletAddress: getAddress(faker.finance.ethereumAddress()),
           role: 'CREATOR',
-          username: faker.helpers.unique(() => faker.internet.username().toLowerCase()),
+          username: faker.internet.username().toLowerCase(),
           displayName: faker.person.fullName(),
-          email: faker.helpers.unique(() => faker.internet.email().toLowerCase()),
+          email: faker.internet.email().toLowerCase(),
           avatarUrl: faker.image.avatar(),
           bio: faker.lorem.sentence(),
           metadata: {},
@@ -36,14 +36,12 @@ async function main() {
       ])
       await prisma.course.create({
         data: {
-          title: faker.lorem.sentence({ min: 2, max: 5 }),
+          title: faker.lorem.words({ min: 3, max: 8 }),
           slug: `${faker.lorem.slug()}-${faker.string.alphanumeric(6).toLowerCase()}`,
           authorId: user.id,
           status,
           version: 1,
-          content: { blocks: [] },
-          draft: status === CourseStatus.DRAFT ? { blocks: [] } : undefined,
-          plainText: faker.lorem.paragraphs({ min: 1, max: 3 }),
+          description: faker.lorem.paragraphs({ min: 1, max: 3 }),
           publishedAt: status === CourseStatus.PUBLISHED ? faker.date.past() : null,
         },
       })

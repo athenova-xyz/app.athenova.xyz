@@ -51,3 +51,22 @@ export async function consumeNonce(hashed: string) {
         return null;
     }
 }
+
+// Helper to resolve the currently authenticated user from the session cookie.
+// This uses the same `verifySession` and `COOKIE_NAME` helpers and centralizes
+// the lookup so server code can import a single function.
+export async function getCurrentUserFromCookie(cookieStore: { get(name: string): { value: string } | undefined } | undefined) {
+    try {
+        if (!cookieStore) return null;
+        const token = cookieStore.get(COOKIE_NAME)?.value;
+        if (!token) return null;
+        const session = verifySession(token);
+        if (!session || typeof session.walletAddress !== "string") return null;
+        const user = await prisma.user.findUnique({
+            where: { walletAddress: (session.walletAddress as string).toLowerCase() },
+        });
+        return user ?? null;
+    } catch {
+        return null;
+    }
+}

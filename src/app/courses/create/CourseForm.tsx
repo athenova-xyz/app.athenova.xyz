@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createCourse } from "./actions";
+import { createCourseAction } from "./actions";
 
 interface FormErrors {
   title?: string;
@@ -51,20 +51,35 @@ export function CourseForm() {
         return;
       }
 
-      // Trim input values before sending to server
-      const title = (formData.get("title") as string)?.trim() || "";
-      const description = (formData.get("description") as string)?.trim() || "";
-
-      const result = await createCourse({
-        title,
-        description,
-      });
+      // Submit to server action (server-side Zod validation)
+      const result = await createCourseAction(formData);
 
       if (result.success) {
         router.push("/courses?created=1");
-      } else {
-        setErrors({ general: result.error || "Failed to create course" });
+        return;
       }
+
+      // Structured field errors from server Zod validation
+      if (result && typeof result === "object" && "errors" in result) {
+        // result.errors is expected to be Record<string, string[]>
+        const serverErrors =
+          (result as unknown as { errors?: Record<string, string[]> }).errors ??
+          {};
+        setErrors({
+          title: serverErrors.title ? serverErrors.title.join(", ") : undefined,
+          description: serverErrors.description
+            ? serverErrors.description.join(", ")
+            : undefined,
+        });
+        return;
+      }
+
+      let errMsg: string | undefined = undefined;
+      if (result && typeof result === "object" && "error" in result) {
+        const maybe = (result as unknown as Record<string, unknown>).error;
+        if (typeof maybe === "string") errMsg = maybe;
+      }
+      setErrors({ general: errMsg || "Failed to create course" });
     } catch {
       setErrors({ general: "An unexpected error occurred" });
     } finally {

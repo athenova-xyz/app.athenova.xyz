@@ -1,5 +1,5 @@
 import { CourseForm } from "./CourseForm";
 
-export default function CreatePage() {
+export default function CreateCourse() {
   return <CourseForm />;
 }

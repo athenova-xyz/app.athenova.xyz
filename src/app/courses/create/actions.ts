@@ -1,56 +1,28 @@
 "use server";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { verifySession, COOKIE_NAME } from "@/lib/auth";
+import { getCurrentUserFromCookie } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { CourseSchema, CourseInput } from "@/lib/schemas/course";
 
-// Helper function to get the current authenticated user
-async function getCurrentUser() {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get(COOKIE_NAME)?.value;
 
-    if (!sessionToken) {
-        return null;
+export async function createCourse(data: CourseInput) {
+    // Defensively validate here as well to guarantee server-side enforcement
+    const parsed = CourseSchema.safeParse(data);
+    if (!parsed.success) {
+        const fieldErrors: Record<string, string[]> = {};
+        for (const issue of parsed.error.issues) {
+            const key = issue.path[0] as string;
+            fieldErrors[key] = fieldErrors[key] || [];
+            fieldErrors[key].push(issue.message);
+        }
+        return { success: false, errors: fieldErrors };
     }
 
-    const session = verifySession(sessionToken);
-    if (!session || typeof session.walletAddress !== "string") {
-        return null;
-    }
+    const { title, description } = parsed.data;
 
-    // Get the user from the database
-    const user = await prisma.user.findUnique({
-        where: { walletAddress: session.walletAddress.toLowerCase() },
-    });
-
-    return user;
-}
-
-export async function createCourse(data: { title: string; description: string }) {
-    const { title: rawTitle, description: rawDescription } = data;
-
-    // Server-side validation - trim and validate input
-    const title = rawTitle?.trim() || "";
-    const description = rawDescription?.trim() || "";
-
-    // Validate title
-    if (!title) {
-        return { success: false, error: "Course title is required" };
-    }
-    if (title.length > 256) {
-        return { success: false, error: "Course title must be 256 characters or less" };
-    }
-
-    // Validate description
-    if (!description) {
-        return { success: false, error: "Course description is required" };
-    }
-    if (description.length > 10000) {
-        return { success: false, error: "Course description must be 10,000 characters or less" };
-    }
-
-    // Get the current authenticated user
-    const user = await getCurrentUser();
+    // Get the current authenticated user from centralized auth helper
+    const user = await getCurrentUserFromCookie(await cookies());
 
     if (!user) {
         // In development only, provide helpful error message about demo user setup
@@ -81,7 +53,21 @@ export async function createCourse(data: { title: string; description: string })
 
 // Server Action usable directly as a form `action`
 export async function createCourseAction(formData: FormData) {
-    const title = String(formData.get("title") ?? "");
-    const description = String(formData.get("description") ?? "");
-    return await createCourse({ title, description });
+    const payload = {
+        title: String(formData.get("title") ?? ""),
+        description: String(formData.get("description") ?? ""),
+    };
+
+    const parsed = CourseSchema.safeParse(payload);
+    if (!parsed.success) {
+        const fieldErrors: Record<string, string[]> = {};
+        for (const issue of parsed.error.issues) {
+            const key = issue.path[0] as string;
+            fieldErrors[key] = fieldErrors[key] || [];
+            fieldErrors[key].push(issue.message);
+        }
+        return { success: false, errors: fieldErrors };
+    }
+
+    return await createCourse(parsed.data);
 }
