@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { COOKIE_NAME } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 
 export async function POST() {
-    const res = NextResponse.json({ success: true });
-    // Expire the session cookie
-    res.cookies.set(COOKIE_NAME, "", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 0,
-    });
-    return res;
+    try {
+        const session = await getSession();
+        session.destroy();
+
+        return NextResponse.json({ success: true, message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Logout error:", error);
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    }
 }

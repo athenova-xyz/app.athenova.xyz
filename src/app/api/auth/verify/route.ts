@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { hashNonce, consumeNonce, signSession, COOKIE_NAME } from "@/lib/auth";
+import { hashNonce, consumeNonce } from "@/lib/auth";
+import { getSession } from "@/lib/session";
 import { SiweMessage, type VerifyParams } from "siwe";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
     try {
@@ -127,19 +129,22 @@ export async function POST(req: Request) {
             }, { status: 400 });
         }
 
-        // Create session token
-        const token = signSession({ walletAddress: siwe.address.toLowerCase() });
+        // Create or find user
+        const walletAddr = siwe.address.toLowerCase();
+        let user = await prisma.user.findUnique({ where: { walletAddress: walletAddr } });
 
-        const response = NextResponse.json({ success: true });
-        response.cookies.set(COOKIE_NAME, token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            maxAge: 7 * 24 * 60 * 60, // 7 days
-        });
+        if (!user) {
+            user = await prisma.user.create({
+                data: { walletAddress: walletAddr },
+            });
+        }
 
-        return response;
+        // Create Iron Session
+        const session = await getSession();
+        session.user = { id: user.id };
+        await session.save();
+
+        return NextResponse.json({ success: true });
 
     } catch (err) {
         console.error("siwe verify failed", err);
