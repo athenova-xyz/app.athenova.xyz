@@ -31,5 +31,5 @@ jobs:
       - name: Build project
         run: npm run build
         env:
-          SESSION_SECRET: ${{ github.event_name == 'pull_request' && 'ci-build-secret' || secrets.SESSION_SECRET }}
+          SESSION_SECRET: ${{ github.event_name == 'pull_request' && secrets.CI_SESSION_SECRET || secrets.SESSION_SECRET }}
           NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "next-public-walletconnect-project-id"
