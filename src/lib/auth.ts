@@ -1,8 +1,9 @@
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "./session";
+import { COOKIE_NAME } from "./constants";
 
-export const COOKIE_NAME = "athena_session";
+export { COOKIE_NAME };
 
 export function hashNonce(nonce: string) {
     return createHash("sha256").update(nonce).digest("hex");

@@ -14,7 +14,8 @@ export const createCourseAction = authActionClient
         }
 
         try {
-            const createdCourseResult = await createCourse(parsedInput, userId); if (createdCourseResult.success) {
+            const createdCourseResult = await createCourse(parsedInput, userId);
+            if (createdCourseResult.success) {
                 return createdCourseResult.data;
             }
 
