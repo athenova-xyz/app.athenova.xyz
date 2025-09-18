@@ -2,17 +2,13 @@ import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-// RequestCookies interface compatible with Next.js cookies()
-interface RequestCookies {
-    get(name: string): { value: string } | undefined;
-}
+interface RequestCookies { get(name: string): { value: string } | undefined; }
 
 const envJwt = process.env.JWT_SECRET;
 if (process.env.NODE_ENV === "production" && (!envJwt || envJwt.trim() === "")) {
     throw new Error("JWT_SECRET must be set in production environment");
 }
 
-// Use provided secret in all environments; fall back to a non-empty dev value in non-production
 const JWT_SECRET = envJwt ?? "local-dev-secret";
 export const COOKIE_NAME = "athena_session";
 
@@ -21,11 +17,7 @@ export function signSession(payload: Record<string, unknown>) {
 }
 
 export function verifySession(token: string) {
-    try {
-        return jwt.verify(token, JWT_SECRET) as Record<string, unknown> | null;
-    } catch {
-        return null;
-    }
+    try { return jwt.verify(token, JWT_SECRET) as Record<string, unknown> | null; } catch { return null; }
 }
 
 export function hashNonce(nonce: string) {
@@ -34,32 +26,18 @@ export function hashNonce(nonce: string) {
 
 export async function consumeNonce(hashed: string) {
     try {
-        // Atomically mark a matching unused, unexpired nonce as used.
-        // This avoids a read-then-write race: updateMany will only affect rows
-        // where used = false and expiresAt > now(). If count is 0, nothing matched.
         const now = new Date();
         const result = await prisma.nonce.updateMany({
-            where: {
-                hashed,
-                used: false,
-                expiresAt: { gt: now },
-            },
+            where: { hashed, used: false, expiresAt: { gt: now } },
             data: { used: true, usedAt: now },
         });
-
         if (result.count === 0) return null;
-
-        // Return the record as it now exists (marked used)
         const updated = await prisma.nonce.findUnique({ where: { hashed } });
         return updated ?? null;
-    } catch {
-        return null;
-    }
+    } catch { return null; }
 }
 
-// Helper to resolve the currently authenticated user from the session cookie.
-// This uses the same `verifySession` and `COOKIE_NAME` helpers and centralizes
-// the lookup so server code can import a single function.
+// Resolve current user from cookie/session
 export async function getCurrentUserFromCookie(cookieStore: RequestCookies | Promise<RequestCookies> | undefined) {
     try {
         if (!cookieStore) return null;
@@ -69,12 +47,9 @@ export async function getCurrentUserFromCookie(cookieStore: RequestCookies | Pro
         const session = verifySession(token);
         if (!session || typeof session.walletAddress !== "string") return null;
         const addr = (session.walletAddress as string).toLowerCase();
-        // Prefer exact lowercased match; fallback to case-insensitive if needed
         const user =
             (await prisma.user.findUnique({ where: { walletAddress: addr } })) ??
             (await prisma.user.findFirst({ where: { walletAddress: { equals: addr, mode: "insensitive" } } }));
         return user ?? null;
-    } catch {
-        return null;
-    }
+    } catch { return null; }
 }

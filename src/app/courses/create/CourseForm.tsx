@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createCourseAction } from "./actions";
+import { createCourseAction } from "@/actions/courses/createCourse/action";
 
 interface FormErrors {
   title?: string;
@@ -60,34 +60,33 @@ export function CourseForm() {
       }
 
       // Submit to server action (server-side Zod validation)
-      const result = await createCourseAction(formData);
+      const payload = {
+        title: String(formData.get("title") ?? ""),
+        description: String(formData.get("description") ?? ""),
+      };
 
-      if (result.success) {
+      const result = await createCourseAction(payload);
+
+      if (result.data) {
         router.push("/courses?created=1");
         return;
       }
 
-      // Structured field errors from server Zod validation
-      if (result && typeof result === "object" && "errors" in result) {
-        // result.errors is expected to be Record<string, string[]>
-        const serverErrors =
-          (result as unknown as { errors?: Record<string, string[]> }).errors ??
-          {};
+      // Handle validation errors from safe action (flattened/fieldErrors shape)
+      if (result.validationErrors) {
         setErrors({
-          title: serverErrors.title ? serverErrors.title.join(", ") : undefined,
-          description: serverErrors.description
-            ? serverErrors.description.join(", ")
-            : undefined,
+          title: (result.validationErrors.fieldErrors?.title ?? [])[0],
+          description: (result.validationErrors.fieldErrors?.description ??
+            [])[0],
         });
         return;
       }
 
-      let errMsg: string | undefined = undefined;
-      if (result && typeof result === "object" && "error" in result) {
-        const maybe = (result as unknown as Record<string, unknown>).error;
-        if (typeof maybe === "string") errMsg = maybe;
+      // Handle server errors
+      if (result.serverError) {
+        setErrors({ general: result.serverError });
+        return;
       }
-      setErrors({ general: errMsg || "Failed to create course" });
     } catch {
       setErrors({ general: "An unexpected error occurred" });
     } finally {
