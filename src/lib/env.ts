@@ -1,3 +1,4 @@
+import "server-only";
 // Environment variables with validation
 const envSessionSecret = process.env.SESSION_SECRET;
 if (process.env.NODE_ENV === "production" && (!envSessionSecret || envSessionSecret.trim() === "")) {
