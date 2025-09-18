@@ -8,7 +8,12 @@ export const createCourseAction = authActionClient
     .inputSchema(createCourseSchema)
     .metadata({ actionName: 'createCourse' })
     .action(async ({ parsedInput, ctx }) => {
-        const userId = ctx.user.id;
+        const userId = ctx.session?.user?.id;
+        if (!userId) {
+            console.error('Course creation error: missing user in session');
+            throw new Error('Not Authorised');
+        }
+
         try {
             const createdCourseResult = await createCourse(parsedInput, userId);
 

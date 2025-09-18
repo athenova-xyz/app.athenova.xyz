@@ -50,12 +50,9 @@ export const authActionClient = actionClient.use(async ({ next, ctx }) => {
     return next({
         ctx: {
             ...ctx,
-            user: {
-                id: user.id
-            },
             session: {
                 user: {
-                    id: userId
+                    id: user.id
                 }
             }
         }

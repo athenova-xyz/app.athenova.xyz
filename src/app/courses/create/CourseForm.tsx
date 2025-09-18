@@ -72,11 +72,12 @@ export function CourseForm() {
         return;
       }
 
-      // Handle validation errors from safe action
+      // Handle validation errors from safe action (flattened/fieldErrors shape)
       if (result.validationErrors) {
         setErrors({
-          title: result.validationErrors.title?._errors?.[0],
-          description: result.validationErrors.description?._errors?.[0],
+          title: (result.validationErrors.fieldErrors?.title ?? [])[0],
+          description: (result.validationErrors.fieldErrors?.description ??
+            [])[0],
         });
         return;
       }
