@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "next lint",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
