@@ -1,24 +1,9 @@
-import jwt from "jsonwebtoken";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "./session";
+import { COOKIE_NAME } from "./constants";
 
-interface RequestCookies { get(name: string): { value: string } | undefined; }
-
-const envJwt = process.env.JWT_SECRET;
-if (process.env.NODE_ENV === "production" && (!envJwt || envJwt.trim() === "")) {
-    throw new Error("JWT_SECRET must be set in production environment");
-}
-
-const JWT_SECRET = envJwt ?? "local-dev-secret";
-export const COOKIE_NAME = "athena_session";
-
-export function signSession(payload: Record<string, unknown>) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
-}
-
-export function verifySession(token: string) {
-    try { return jwt.verify(token, JWT_SECRET) as Record<string, unknown> | null; } catch { return null; }
-}
+export { COOKIE_NAME };
 
 export function hashNonce(nonce: string) {
     return createHash("sha256").update(nonce).digest("hex");
@@ -37,19 +22,17 @@ export async function consumeNonce(hashed: string) {
     } catch { return null; }
 }
 
-// Resolve current user from cookie/session
-export async function getCurrentUserFromCookie(cookieStore: RequestCookies | Promise<RequestCookies> | undefined) {
+// Get current user from Iron Session
+export async function getCurrentUserFromSession() {
     try {
-        if (!cookieStore) return null;
-        const store = await cookieStore;
-        const token = store.get(COOKIE_NAME)?.value;
-        if (!token) return null;
-        const session = verifySession(token);
-        if (!session || typeof session.walletAddress !== "string") return null;
-        const addr = (session.walletAddress as string).toLowerCase();
-        const user =
-            (await prisma.user.findUnique({ where: { walletAddress: addr } })) ??
-            (await prisma.user.findFirst({ where: { walletAddress: { equals: addr, mode: "insensitive" } } }));
+        const session = await getSession();
+        if (!session.user?.id) return null;
+
+        const user = await prisma.user.findFirst({
+            where: { id: session.user.id }
+        });
         return user ?? null;
-    } catch { return null; }
+    } catch {
+        return null;
+    }
 }

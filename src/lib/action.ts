@@ -1,7 +1,7 @@
-import { getCurrentUserFromCookie } from './auth';
+import { getSession } from './session';
 import { prisma } from './prisma';
 import { createSafeActionClient } from 'next-safe-action';
-import { headers, cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import * as zod from 'zod';
 
 function defineMetadataSchema() {
@@ -20,11 +20,11 @@ export const actionClient = createSafeActionClient({
      * Returns the context with the session object.
      */
     .use(async ({ next }) => {
-        const user = await getCurrentUserFromCookie(await cookies());
+        const session = await getSession();
         const headerList = await headers();
 
         return next({
-            ctx: { session: { user }, headers: headerList }
+            ctx: { session, headers: headerList }
         });
     });
 
@@ -51,6 +51,8 @@ export const authActionClient = actionClient.use(async ({ next, ctx }) => {
         ctx: {
             ...ctx,
             session: {
+                destroy: ctx.session.destroy,
+                save: ctx.session.save,
                 user: {
                     id: user.id
                 }

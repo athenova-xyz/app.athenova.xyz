@@ -40,7 +40,7 @@ export default function SignupPage() {
         const data = await res.json().catch(() => null);
         setError(data?.message || "Signup failed");
       }
-    } catch (err) {
+    } catch {
       setError("Network error. Please try again.");
     } finally {
       setIsSubmitting(false);
