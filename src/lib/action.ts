@@ -1,13 +1,63 @@
-// Typically in lib/action.ts
-import { getCurrentUserFromCookie } from "./auth";
-import { createSafeActionClient } from "next-safe-action";
-import { cookies } from "next/headers";
+import { getCurrentUserFromCookie } from './auth';
+import { prisma } from './prisma';
+import { createSafeActionClient } from 'next-safe-action';
+import { headers, cookies } from 'next/headers';
+import * as zod from 'zod';
 
-export const actionClient = createSafeActionClient({})
+function defineMetadataSchema() {
+    return zod.object({
+        actionName: zod.string()
+    });
+}
+
+export const actionClient = createSafeActionClient({
+    defineMetadataSchema,
+    handleServerError: (err: Error) => err.message,
+    defaultValidationErrorsShape: 'flattened'
+})
+    /**
+     * Middleware used for auth purposes.
+     * Returns the context with the session object.
+     */
     .use(async ({ next }) => {
         const user = await getCurrentUserFromCookie(await cookies());
-        if (!user) throw new Error("Not Authorised");
-        return next({ ctx: { user } });
+        const headerList = await headers();
+
+        return next({
+            ctx: { session: { user }, headers: headerList }
+        });
     });
 
-export const authActionClient = actionClient /* .add more ctx/middleware if needed */;
+export const authActionClient = actionClient.use(async ({ next, ctx }) => {
+    const userId = ctx.session.user?.id;
+
+    if (!userId) {
+        console.error('Not Authorised', new Error('Invalid user, not allowed'));
+        throw new Error('Not Authorised');
+    }
+
+    const user = await prisma.user.findFirst({
+        where: {
+            id: userId
+        }
+    });
+
+    if (!user) {
+        console.error('Not Authorised', new Error('Invalid user, not allowed'));
+        throw new Error('Not Authorised');
+    }
+
+    return next({
+        ctx: {
+            ...ctx,
+            user: {
+                id: user.id
+            },
+            session: {
+                user: {
+                    id: userId
+                }
+            }
+        }
+    });
+});

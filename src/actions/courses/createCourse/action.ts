@@ -1,16 +1,24 @@
-"use server";
-import { authActionClient } from "@/lib/action";
-import { createCourse } from "./logic";
-import { createCourseSchema } from "./schema";
+'use server';
+
+import { authActionClient } from '@/lib/action';
+import { createCourse } from './logic';
+import { createCourseSchema } from './schema';
 
 export const createCourseAction = authActionClient
     .inputSchema(createCourseSchema)
+    .metadata({ actionName: 'createCourse' })
     .action(async ({ parsedInput, ctx }) => {
-        if (!ctx.user) {
-            throw new Error('Unauthorized');
-        }
         const userId = ctx.user.id;
-        const result = await createCourse(parsedInput, userId);
-        if (result.success) return result.data;
-        throw new Error(result.error || "Failed to create course");
+        try {
+            const createdCourseResult = await createCourse(parsedInput, userId);
+
+            if (createdCourseResult.success) {
+                return createdCourseResult.data;
+            }
+
+            throw new Error(createdCourseResult.error);
+        } catch (error) {
+            console.error('Course creation error:', error, { userId });
+            throw new Error('Something went wrong', { cause: error });
+        }
     });
