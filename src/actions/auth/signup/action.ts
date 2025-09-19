@@ -17,7 +17,7 @@ type SignupActionResult = {
 export const signupAction = actionClient
     .inputSchema(signupSchema)
     .metadata({ actionName: 'signup' })
-    .action(async ({ parsedInput }): Promise<SignupActionResult> => {
+    .action(async ({ parsedInput, ctx }): Promise<SignupActionResult> => {
         // Validate required fields
         if (!parsedInput.email) {
             return { serverError: 'Email is required' };
@@ -36,15 +36,12 @@ export const signupAction = actionClient
         }
 
         try {
-            // Set session
-            const session = await getSession();
+            const { session } = ctx as { session: Awaited<ReturnType<typeof getSession>> };
             session.user = { id: result.data.id };
             await session.save();
-
             return { data: result.data };
         } catch (sessionError) {
             console.error('Session creation error:', sessionError);
-            // User was created but session failed - return success anyway since user exists
-            return { data: result.data };
+            return { serverError: "Account created, but couldn't sign you in automatically. Please log in." };
         }
     });

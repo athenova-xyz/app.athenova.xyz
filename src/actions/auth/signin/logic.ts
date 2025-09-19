@@ -89,7 +89,17 @@ export async function signin(input: SigninInput, headers: Headers): Promise<Resu
 
         return success(updatedUser);
     } catch (err) {
-        console.error('Sign-in error:', err);
-        return failure(err instanceof Error ? err.message : 'Internal server error');
+        // Log full error for observability, but return generic message to client
+        if (err instanceof Error) {
+            console.error('Sign-in error:', err.stack || err.message);
+        } else {
+            try {
+                console.error('Sign-in error (non-Error):', JSON.stringify(err));
+            } catch {
+                console.error('Sign-in error (non-Error, unstringifiable):', String(err));
+            }
+        }
+
+        return failure('Sign-in failed');
     }
 }

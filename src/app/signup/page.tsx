@@ -19,12 +19,14 @@ export default function SignUpPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    setSuccess("");
 
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
@@ -43,7 +45,8 @@ export default function SignUpPage() {
       if (result && "serverError" in result && result.serverError) {
         setError(result.serverError);
       } else if (result && "data" in result && result.data) {
-        router.push("/login");
+        setSuccess("Account created successfully! Redirecting...");
+        setTimeout(() => router.replace("/login"), 900);
       } else {
         setError("Signup failed. Please try again.");
       }
@@ -72,6 +75,15 @@ export default function SignUpPage() {
               className="p-3 rounded-md bg-destructive/10 border border-destructive/20 mb-4"
             >
               <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div
+              role="status"
+              className="p-3 rounded-md bg-green-50 border border-green-200 mb-4"
+            >
+              <p className="text-sm text-green-800">{success}</p>
             </div>
           )}
 
