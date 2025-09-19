@@ -3,6 +3,10 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
+import { getNonceAction } from "@/actions/auth/nonce/server-action";
+import { verifySiweAction } from "@/actions/auth/verify/server-action";
+import { getUserAction } from "@/actions/users/server-action";
+import { logoutAction } from "@/actions/auth/logout/server-action";
 import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
@@ -19,6 +23,8 @@ export default function GetStartedPage() {
     id: string;
     walletAddress: string;
     role: string;
+    lastLoginAt: Date | null;
+    createdAt: Date;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,10 +36,10 @@ export default function GetStartedPage() {
 
     try {
       // Step 1: Get nonce from the server
-      const nonceResponse = await fetch("/api/auth/nonce");
-      if (!nonceResponse.ok) throw new Error("Failed to get nonce");
+      const nonceResult = await getNonceAction();
+      if (!nonceResult.success) throw new Error("Failed to get nonce");
 
-      const { nonce } = await nonceResponse.json();
+      const { nonce } = nonceResult;
 
       // Step 2: Create a SIWE message
       // read client-visible env vars (NEXT_PUBLIC_*) and enforce in production
@@ -78,40 +84,21 @@ export default function GetStartedPage() {
 
       const signature = await signMessageAsync({ message: messageString });
 
-      const verifyResponse = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageString, signature }),
-        credentials: "include",
-      });
+      const verifyResult = await verifySiweAction(messageString, signature);
 
-      if (!verifyResponse.ok) {
+      if (!verifyResult.success) {
         throw new Error("Failed to verify signature");
       }
 
-      const userResponse = await fetch("/api/users", {
-        method: "POST",
-        credentials: "include",
-      });
+      const userResult = await getUserAction();
 
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUserProfile(userData.user);
-      } else if (userResponse.status === 409) {
-        const meResp = await fetch("/api/users/me", { credentials: "include" });
-        if (meResp.ok) {
-          const me = await meResp.json();
-          setUserProfile(me.user);
-        } else {
-          throw new Error("Account exists but could not fetch profile");
-        }
+      if (userResult.success && userResult.user) {
+        setUserProfile({
+          ...userResult.user,
+          role: userResult.user.role.toString(),
+        });
       } else {
-        let errorMsg = "Failed to create user profile";
-        try {
-          const errorData = await userResponse.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch {}
-        throw new Error(errorMsg);
+        throw new Error(userResult.message || "Failed to create user profile");
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -126,13 +113,9 @@ export default function GetStartedPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const resp = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => null);
-        throw new Error(err?.message || "Failed to logout");
+      const result = await logoutAction();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to logout");
       }
     } catch (e) {
       console.error("Logout request failed", e);

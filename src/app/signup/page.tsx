@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { signupServerAction } from "@/actions/auth/signup/server-action";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,19 +27,14 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const result = await signupServerAction(name, email, password);
 
-      if (res.ok) {
+      if (result.success) {
         setSuccess("Account created. Redirecting...");
         // After signup, go to get-started or login page
-        setTimeout(() => router.push("/get-started"), 700);
+        setTimeout(() => router.push("/login"), 700);
       } else {
-        const data = await res.json().catch(() => null);
-        setError(data?.message || "Signup failed");
+        setError(result.error || "Signup failed");
       }
     } catch {
       setError("Network error. Please try again.");
@@ -48,7 +44,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen min-h-[100dvh] flex items-center justify-center bg-background px-4 py-10">
+    <main className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
         <div className="p-8 bg-white rounded-lg border border-auth shadow-sm">
           <h1 className="text-2xl font-semibold mb-2 text-foreground">
@@ -110,7 +106,7 @@ export default function SignupPage() {
 
           <p className="mt-4 text-xs text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/get-started" className="athena-link">
+            <Link href="/login" className="athena-link">
               Log in
             </Link>
           </p>
