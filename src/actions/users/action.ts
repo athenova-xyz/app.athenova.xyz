@@ -1,3 +1,4 @@
+"use server";
 import { actionClient } from '@/lib/action';
 import { getOrUpdateCurrentUser } from './logic';
 

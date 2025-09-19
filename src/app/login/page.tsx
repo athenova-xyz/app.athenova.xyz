@@ -3,10 +3,10 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
-import { getNonceAction } from "@/actions/auth/nonce/server-action";
-import { verifySiweAction } from "@/actions/auth/verify/server-action";
-import { getUserAction } from "@/actions/users/server-action";
-import { logoutAction } from "@/actions/auth/logout/server-action";
+import { issueNonceAction } from "@/actions/auth/nonce/action";
+import { verifySiweAction } from "@/actions/auth/verify/action";
+import { usersAction } from "@/actions/users/action";
+import { logoutAction } from "@/actions/auth/logout/action";
 import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
@@ -35,14 +35,11 @@ export default function GetStartedPage() {
     setError(null);
 
     try {
-      // Step 1: Get nonce from the server
-      const nonceResult = await getNonceAction();
-      if (!nonceResult.success) throw new Error("Failed to get nonce");
+      const nonceResult = await issueNonceAction();
+      if (nonceResult?.serverError || !nonceResult?.data)
+        throw new Error("Failed to get nonce");
+      const { nonce } = nonceResult.data;
 
-      const { nonce } = nonceResult;
-
-      // Step 2: Create a SIWE message
-      // read client-visible env vars (NEXT_PUBLIC_*) and enforce in production
       const envDomain = process.env.NEXT_PUBLIC_SIWE_DOMAIN;
       const envUri = process.env.NEXT_PUBLIC_SIWE_URI;
       const envStatement = process.env.NEXT_PUBLIC_SIWE_STATEMENT;
@@ -61,18 +58,13 @@ export default function GetStartedPage() {
       const domain = envDomain ?? window.location.host;
       const uri = envUri ?? window.location.origin;
       const statement = envStatement ?? "Sign in with Ethereum to Athenova";
-
-      let parsedChainId: number | undefined = undefined;
-      if (envChainId) {
-        const n = parseInt(envChainId, 10);
-        if (!Number.isNaN(n)) parsedChainId = n;
-      }
+      const parsedChainId = envChainId ? parseInt(envChainId, 10) : undefined;
       const finalChainId =
         parsedChainId ?? (typeof chainId === "number" ? chainId : 1);
 
       const message = new SiweMessage({
         domain,
-        address: address,
+        address: address!,
         statement,
         uri,
         version: "1",
@@ -81,25 +73,29 @@ export default function GetStartedPage() {
       });
 
       const messageString = message.prepareMessage();
-
       const signature = await signMessageAsync({ message: messageString });
 
-      const verifyResult = await verifySiweAction(messageString, signature);
-
-      if (!verifyResult.success) {
+      const verifyResult = await verifySiweAction({
+        message: messageString,
+        signature,
+      });
+      if (verifyResult?.serverError)
         throw new Error("Failed to verify signature");
-      }
 
-      const userResult = await getUserAction();
+      const userResult = await usersAction();
+      if (userResult?.serverError || !userResult?.data)
+        throw new Error("Failed to create user profile");
 
-      if (userResult.success && userResult.user) {
-        setUserProfile({
-          ...userResult.user,
-          role: userResult.user.role.toString(),
-        });
-      } else {
-        throw new Error(userResult.message || "Failed to create user profile");
-      }
+      const user = userResult.data;
+      setUserProfile({
+        id: user.id,
+        walletAddress: user.walletAddress,
+        role: user.role.toString(),
+        lastLoginAt: user.lastLoginAt
+          ? new Date(user.lastLoginAt as unknown as string)
+          : null,
+        createdAt: new Date(user.createdAt as unknown as string),
+      });
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Login failed. Please try again.";
@@ -114,9 +110,8 @@ export default function GetStartedPage() {
     setError(null);
     try {
       const result = await logoutAction();
-      if (!result.success) {
-        throw new Error(result.error || "Failed to logout");
-      }
+      if (result?.serverError) throw new Error("Failed to logout");
+      if (!result?.data) throw new Error("Failed to logout");
     } catch (e) {
       console.error("Logout request failed", e);
     } finally {
@@ -135,7 +130,6 @@ export default function GetStartedPage() {
     >
       <div className="w-full max-w-md">
         <div className="relative">
-          {/* Main card: matches screenshot layout */}
           <div className="rounded-2xl border border-auth bg-white p-10 max-w-md mx-auto shadow-sm">
             <div className="flex flex-col items-center text-center">
               <div className="flex items-center gap-3">
@@ -159,7 +153,6 @@ export default function GetStartedPage() {
                   Log in with Google
                 </Button>
 
-                {/* single Connect Wallet button inside the card */}
                 <ConnectButton.Custom>
                   {({ openConnectModal }) => (
                     <Button
@@ -197,9 +190,6 @@ export default function GetStartedPage() {
             </div>
           </div>
 
-          {/* --- Alerts / Modals kept outside the card so card stays visually identical to screenshot --- */}
-
-          {/* Success alert when userProfile exists */}
           {userProfile && (
             <div
               role="status"
@@ -239,10 +229,7 @@ export default function GetStartedPage() {
                     Logout & Disconnect
                   </Button>
                   <Button
-                    onClick={() => {
-                      // keep logic same; closing alert just clears profile UI
-                      setUserProfile(null);
-                    }}
+                    onClick={() => setUserProfile(null)}
                     className="flex-1"
                   >
                     Close
@@ -252,7 +239,6 @@ export default function GetStartedPage() {
             </div>
           )}
 
-          {/* Connected-but-not-logged-in alert */}
           {isConnected && !userProfile && (
             <div
               role="alert"

@@ -1,3 +1,5 @@
+"use server";
+
 import { issueNonce } from "./logic";
 import { actionClient } from "@/lib/action";
 

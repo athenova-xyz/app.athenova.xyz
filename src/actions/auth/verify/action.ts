@@ -1,3 +1,5 @@
+"use server";
+
 import { actionClient } from '@/lib/action';
 import { verifySiwe } from './logic';
 import { verifySiweSchema } from './schema';

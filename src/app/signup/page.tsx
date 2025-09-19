@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { signupServerAction } from "@/actions/auth/signup/server-action";
+import { signupAction } from "@/actions/auth/signup/action";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,17 +27,61 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await signupServerAction(name, email, password);
+      const result = await signupAction({ name, email, password });
+      console.log("signupAction result:", result);
 
-      if (result.success) {
-        setSuccess("Account created. Redirecting...");
-        // After signup, go to get-started or login page
-        setTimeout(() => router.push("/login"), 700);
-      } else {
-        setError(result.error || "Signup failed");
+      // If action returned serverError shape from next-safe-action
+      if (result && "serverError" in result && result.serverError) {
+        // serverError can be string or object; try to get readable message
+        const se = result.serverError as unknown;
+        if (typeof se === "string") {
+          setError(se);
+        } else if (typeof se === "object" && se !== null) {
+          try {
+            setError(JSON.stringify(se));
+          } catch {
+            setError("Signup failed with unknown server error");
+          }
+        } else {
+          setError("Signup failed with unknown server error");
+        }
+        return;
       }
-    } catch {
-      setError("Network error. Please try again.");
+
+      // If result contains data (created user)
+      if (result && "data" in result && result.data) {
+        setSuccess("Account created successfully! Redirecting to login...");
+        setTimeout(() => router.push("/login"), 1200);
+        return;
+      }
+
+      // If the result is an Error thrown or unexpected
+      if (result == null) {
+        setError("Signup failed. No response from server.");
+      } else if (
+        result &&
+        typeof result === "object" &&
+        ("error" in result || "message" in result)
+      ) {
+        const r = result as unknown as Record<string, unknown>;
+        const errMsg =
+          typeof r.error === "string"
+            ? r.error
+            : typeof r.message === "string"
+            ? r.message
+            : "Signup failed.";
+        setError(errMsg);
+      } else {
+        setError("Signup failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Signup error caught in UI:", error);
+      const e = error as unknown as Record<string, unknown>;
+      setError(
+        typeof e.message === "string"
+          ? String(e.message)
+          : "Network error. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
