@@ -3,6 +3,10 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import Link from "next/link";
+import { issueNonceAction } from "@/actions/auth/nonce/action";
+import { verifySiweAction } from "@/actions/auth/verify/action";
+import { usersAction } from "@/actions/users/action";
+import { logoutAction } from "@/actions/auth/logout/action";
 import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
@@ -19,6 +23,8 @@ export default function GetStartedPage() {
     id: string;
     walletAddress: string;
     role: string;
+    lastLoginAt: Date | null;
+    createdAt: Date;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,14 +35,11 @@ export default function GetStartedPage() {
     setError(null);
 
     try {
-      // Step 1: Get nonce from the server
-      const nonceResponse = await fetch("/api/auth/nonce");
-      if (!nonceResponse.ok) throw new Error("Failed to get nonce");
+      const nonceResult = await issueNonceAction();
+      if (nonceResult?.serverError || !nonceResult?.data)
+        throw new Error("Failed to get nonce");
+      const { nonce } = nonceResult.data;
 
-      const { nonce } = await nonceResponse.json();
-
-      // Step 2: Create a SIWE message
-      // read client-visible env vars (NEXT_PUBLIC_*) and enforce in production
       const envDomain = process.env.NEXT_PUBLIC_SIWE_DOMAIN;
       const envUri = process.env.NEXT_PUBLIC_SIWE_URI;
       const envStatement = process.env.NEXT_PUBLIC_SIWE_STATEMENT;
@@ -55,18 +58,13 @@ export default function GetStartedPage() {
       const domain = envDomain ?? window.location.host;
       const uri = envUri ?? window.location.origin;
       const statement = envStatement ?? "Sign in with Ethereum to Athenova";
-
-      let parsedChainId: number | undefined = undefined;
-      if (envChainId) {
-        const n = parseInt(envChainId, 10);
-        if (!Number.isNaN(n)) parsedChainId = n;
-      }
+      const parsedChainId = envChainId ? parseInt(envChainId, 10) : undefined;
       const finalChainId =
         parsedChainId ?? (typeof chainId === "number" ? chainId : 1);
 
       const message = new SiweMessage({
         domain,
-        address: address,
+        address: address!,
         statement,
         uri,
         version: "1",
@@ -75,44 +73,27 @@ export default function GetStartedPage() {
       });
 
       const messageString = message.prepareMessage();
-
       const signature = await signMessageAsync({ message: messageString });
 
-      const verifyResponse = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageString, signature }),
-        credentials: "include",
+      const verifyResult = await verifySiweAction({
+        message: messageString,
+        signature,
       });
-
-      if (!verifyResponse.ok) {
+      if (verifyResult?.serverError)
         throw new Error("Failed to verify signature");
-      }
 
-      const userResponse = await fetch("/api/users", {
-        method: "POST",
-        credentials: "include",
+      const userResult = await usersAction();
+      if (userResult?.serverError || !userResult?.data)
+        throw new Error("Failed to create user profile");
+
+      const user = userResult.data;
+      setUserProfile({
+        id: user.id,
+        walletAddress: user.walletAddress,
+        role: user.role.toString(),
+        lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt) : null,
+        createdAt: new Date(user.createdAt),
       });
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUserProfile(userData.user);
-      } else if (userResponse.status === 409) {
-        const meResp = await fetch("/api/users/me", { credentials: "include" });
-        if (meResp.ok) {
-          const me = await meResp.json();
-          setUserProfile(me.user);
-        } else {
-          throw new Error("Account exists but could not fetch profile");
-        }
-      } else {
-        let errorMsg = "Failed to create user profile";
-        try {
-          const errorData = await userResponse.json();
-          errorMsg = errorData.message || errorMsg;
-        } catch {}
-        throw new Error(errorMsg);
-      }
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Login failed. Please try again.";
@@ -126,14 +107,9 @@ export default function GetStartedPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const resp = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => null);
-        throw new Error(err?.message || "Failed to logout");
-      }
+      const result = await logoutAction();
+      if (result?.serverError) throw new Error("Failed to logout");
+      if (!result?.data) throw new Error("Failed to logout");
     } catch (e) {
       console.error("Logout request failed", e);
     } finally {
@@ -152,7 +128,6 @@ export default function GetStartedPage() {
     >
       <div className="w-full max-w-md">
         <div className="relative">
-          {/* Main card: matches screenshot layout */}
           <div className="rounded-2xl border border-auth bg-white p-10 max-w-md mx-auto shadow-sm">
             <div className="flex flex-col items-center text-center">
               <div className="flex items-center gap-3">
@@ -176,7 +151,6 @@ export default function GetStartedPage() {
                   Log in with Google
                 </Button>
 
-                {/* single Connect Wallet button inside the card */}
                 <ConnectButton.Custom>
                   {({ openConnectModal }) => (
                     <Button
@@ -214,9 +188,6 @@ export default function GetStartedPage() {
             </div>
           </div>
 
-          {/* --- Alerts / Modals kept outside the card so card stays visually identical to screenshot --- */}
-
-          {/* Success alert when userProfile exists */}
           {userProfile && (
             <div
               role="status"
@@ -256,10 +227,7 @@ export default function GetStartedPage() {
                     Logout & Disconnect
                   </Button>
                   <Button
-                    onClick={() => {
-                      // keep logic same; closing alert just clears profile UI
-                      setUserProfile(null);
-                    }}
+                    onClick={() => setUserProfile(null)}
                     className="flex-1"
                   >
                     Close
@@ -269,7 +237,6 @@ export default function GetStartedPage() {
             </div>
           )}
 
-          {/* Connected-but-not-logged-in alert */}
           {isConnected && !userProfile && (
             <div
               role="alert"
