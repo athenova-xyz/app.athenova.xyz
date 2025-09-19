@@ -51,13 +51,15 @@ export async function signin(input: SigninInput, headers: Headers): Promise<Resu
             const rpcUrl = process.env.SIWE_RPC_URL || process.env.RPC_URL || (expectedChainId === 1 ? 'https://cloudflare-eth.com' : undefined);
             const provider = rpcUrl ? new (await import('ethers')).JsonRpcProvider(rpcUrl) : undefined;
 
-            const verifyOptions: VerifyParams = {
+            const verifyOptions: VerifyParams & { provider?: import('ethers').JsonRpcProvider } = {
                 signature,
                 domain: expectedDomain,
                 nonce
-            } as unknown as VerifyParams;
+            };
 
-            if (provider) (verifyOptions as unknown as { provider?: unknown }).provider = provider;
+            if (provider) {
+                verifyOptions.provider = provider;
+            }
 
             await siwe.verify(verifyOptions);
         } catch (err) {

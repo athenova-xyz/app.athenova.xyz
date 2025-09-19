@@ -5,27 +5,35 @@ import { signup } from './logic';
 import { signupSchema } from './schema';
 import { getSession } from '@/lib/session';
 
+type SignupActionResult = {
+    serverError?: string;
+    data?: {
+        id: string;
+        email: string | null;
+        role: string;
+    };
+};
+
 export const signupAction = actionClient
     .inputSchema(signupSchema)
     .metadata({ actionName: 'signup' })
-    .action(async ({ parsedInput }): Promise<Record<string, unknown>> => {
-        console.log('Signup action called with:', { email: parsedInput.email, hasName: !!parsedInput.name });
+    .action(async ({ parsedInput }): Promise<SignupActionResult> => {
+        // Validate required fields
+        if (!parsedInput.email) {
+            return { serverError: 'Email is required' };
+        }
 
         let result;
         try {
             result = await signup(parsedInput);
         } catch (err) {
             console.error('signup() threw an error:', err);
-            return { serverError: 'Internal server error' } as unknown as Record<string, unknown>;
+            return { serverError: 'Failed to create account. Please try again.' };
         }
 
         if (!result.success) {
-            console.log('Signup failed:', result.error);
-            // Return a structured serverError so the client can present it
-            return { serverError: result.error } as unknown as Record<string, unknown>;
+            return { serverError: result.error };
         }
-
-        console.log('Signup successful, setting session for user:', result.data.id);
 
         try {
             // Set session
@@ -33,12 +41,10 @@ export const signupAction = actionClient
             session.user = { id: result.data.id };
             await session.save();
 
-            console.log('Session saved successfully');
-
-            return { data: result.data } as unknown as Record<string, unknown>;
+            return { data: result.data };
         } catch (sessionError) {
             console.error('Session creation error:', sessionError);
-            // User was created but session failed - return success data anyway
-            return { data: result.data } as unknown as Record<string, unknown>;
+            // User was created but session failed - return success anyway since user exists
+            return { data: result.data };
         }
     });

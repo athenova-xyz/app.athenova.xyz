@@ -14,7 +14,7 @@ export async function issueNonce() {
             created = await prisma.nonce.create({ data: { hashed, expiresAt } });
             break;
         } catch (err: unknown) {
-            const prismaErr = (err && typeof err === "object") ? (err as { code?: unknown }) : undefined;
+            const prismaErr = err && typeof err === "object" && 'code' in err ? err as { code: string } : undefined;
             const code = prismaErr && typeof prismaErr.code === "string" ? prismaErr.code : undefined;
             if (code === "P2002" && attempt < maxRetries) {
                 nonce = randomBytes(16).toString("hex");

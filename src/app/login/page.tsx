@@ -91,10 +91,8 @@ export default function GetStartedPage() {
         id: user.id,
         walletAddress: user.walletAddress,
         role: user.role.toString(),
-        lastLoginAt: user.lastLoginAt
-          ? new Date(user.lastLoginAt as unknown as string)
-          : null,
-        createdAt: new Date(user.createdAt as unknown as string),
+        lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt) : null,
+        createdAt: new Date(user.createdAt),
       });
     } catch (err: unknown) {
       const errorMessage =

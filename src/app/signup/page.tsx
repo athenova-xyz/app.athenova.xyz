@@ -1,89 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { signupAction } from "@/actions/auth/signup/action";
 
-export default function SignupPage() {
+type SignupResult = {
+  serverError?: string;
+  data?: { id: string; email?: string | null; role?: string };
+};
+
+export default function SignUpPage() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    setIsLoading(true);
+    setError("");
 
-    if (!email || !password) {
-      setError("Email and password are required.");
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.password) {
+      setError("Please fill in all fields");
+      setIsLoading(false);
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      const result = await signupAction({ name, email, password });
-      console.log("signupAction result:", result);
+      const result = (await signupAction({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      })) as SignupResult;
 
-      // If action returned serverError shape from next-safe-action
       if (result && "serverError" in result && result.serverError) {
-        // serverError can be string or object; try to get readable message
-        const se = result.serverError as unknown;
-        if (typeof se === "string") {
-          setError(se);
-        } else if (typeof se === "object" && se !== null) {
-          try {
-            setError(JSON.stringify(se));
-          } catch {
-            setError("Signup failed with unknown server error");
-          }
-        } else {
-          setError("Signup failed with unknown server error");
-        }
-        return;
-      }
-
-      // If result contains data (created user)
-      if (result && "data" in result && result.data) {
-        setSuccess("Account created successfully! Redirecting to login...");
-        setTimeout(() => router.push("/login"), 1200);
-        return;
-      }
-
-      // If the result is an Error thrown or unexpected
-      if (result == null) {
-        setError("Signup failed. No response from server.");
-      } else if (
-        result &&
-        typeof result === "object" &&
-        ("error" in result || "message" in result)
-      ) {
-        const r = result as unknown as Record<string, unknown>;
-        const errMsg =
-          typeof r.error === "string"
-            ? r.error
-            : typeof r.message === "string"
-            ? r.message
-            : "Signup failed.";
-        setError(errMsg);
+        setError(result.serverError);
+      } else if (result && "data" in result && result.data) {
+        router.push("/login");
       } else {
         setError("Signup failed. Please try again.");
       }
     } catch (error) {
-      console.error("Signup error caught in UI:", error);
-      const e = error as unknown as Record<string, unknown>;
-      setError(
-        typeof e.message === "string"
-          ? String(e.message)
-          : "Network error. Please try again."
-      );
+      console.error("Signup error:", error);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -107,28 +75,23 @@ export default function SignupPage() {
             </div>
           )}
 
-          {success && (
-            <div
-              role="status"
-              className="p-3 rounded-md bg-green-50 border border-green-200 mb-4"
-            >
-              <p className="text-sm text-green-800">{success}</p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="Full name"
               className="w-full p-3 border border-gray-200 rounded"
             />
             <input
               name="email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               placeholder="Email"
               className="w-full p-3 border border-gray-200 rounded"
               required
@@ -136,15 +99,17 @@ export default function SignupPage() {
             <input
               name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               placeholder="Password"
               className="w-full p-3 border border-gray-200 rounded"
               required
             />
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
 

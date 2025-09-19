@@ -13,6 +13,11 @@ type CreatedUser = {
 export async function signup(input: SignupInput): Promise<Result<CreatedUser>> {
     const { email } = input;
 
+    // Validate email format
+    if (!email || !email.includes('@')) {
+        return failure('Please provide a valid email address');
+    }
+
     try {
         // Check if user already exists
         const existingUser = await prisma.user.findUnique({
@@ -20,7 +25,7 @@ export async function signup(input: SignupInput): Promise<Result<CreatedUser>> {
         });
 
         if (existingUser) {
-            return failure('User already exists with this email');
+            return failure('An account with this email already exists');
         }
 
         // Create user with email (using placeholder wallet address since it's required)
@@ -35,7 +40,7 @@ export async function signup(input: SignupInput): Promise<Result<CreatedUser>> {
 
         return success(user);
     } catch (err) {
-        console.error('Sign-up error:', err);
-        return failure('Internal server error');
+        console.error('Sign-up database error:', err);
+        return failure('Unable to create account. Please try again later.');
     }
 }

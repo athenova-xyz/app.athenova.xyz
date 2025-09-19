@@ -1,12 +1,11 @@
-import { getSession } from '@/lib/session';
+import { IronSession } from 'iron-session';
+import { SessionData } from '@/lib/session';
 
-export async function logout() {
-    const session = await getSession();
-
+export async function logout(session: IronSession<SessionData>) {
     try {
-        if (session) {
-            await session.destroy();
-        }
+        // Since we're using authActionClient, we know session exists
+        // Destroy the session directly
+        await session.destroy();
 
         return { success: true };
     } catch (error) {

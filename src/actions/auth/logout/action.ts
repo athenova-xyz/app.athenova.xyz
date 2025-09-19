@@ -1,10 +1,10 @@
 "use server";
 
-import { actionClient } from '@/lib/action';
+import { authActionClient } from '@/lib/action';
 import { logout } from './logic';
 
-export const logoutAction = actionClient
+export const logoutAction = authActionClient
     .metadata({ actionName: 'auth.logout' })
-    .action(async () => {
-        return logout();
+    .action(async ({ ctx }) => {
+        return logout(ctx.session);
     });
