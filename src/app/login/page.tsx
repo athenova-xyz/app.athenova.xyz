@@ -11,7 +11,7 @@ import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { EmailLoginCard } from "@/components/models/auth/EmailLoginCard";
 
 export default function GetStartedPage() {
@@ -29,6 +29,30 @@ export default function GetStartedPage() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // When dialog opens, save focus, lock scroll, and move focus into dialog
+    if (showEmailLogin) {
+      previousActiveElementRef.current =
+        document.activeElement as HTMLElement | null;
+      document.body.style.overflow = "hidden";
+      // Move focus into the dialog container so screen readers announce it
+      setTimeout(() => dialogRef.current?.focus(), 0);
+    }
+
+    // When dialog closes, restore focus and scrolling
+    return () => {
+      if (!showEmailLogin) return;
+      document.body.style.overflow = "";
+      try {
+        previousActiveElementRef.current?.focus();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [showEmailLogin]);
 
   const handleLogin = async () => {
     if (!isConnected || !address) return;
@@ -291,11 +315,22 @@ export default function GetStartedPage() {
           )}
 
           {showEmailLogin && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 z-40 flex items-center justify-center p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Email sign in"
+              onKeyDown={(e) => {
+                if (e.key === "Escape" || e.key === "Esc")
+                  setShowEmailLogin(false);
+              }}
+              tabIndex={-1}
+              ref={dialogRef}
+            >
               <div
                 className="absolute inset-0 bg-black/40"
                 onClick={() => setShowEmailLogin(false)}
-                aria-hidden
+                aria-hidden="true"
               />
               <div className="relative z-50 w-full max-w-md">
                 <EmailLoginCard />
