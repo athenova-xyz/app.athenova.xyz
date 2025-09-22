@@ -77,7 +77,7 @@ export function FormInput<
                 }}
                 onBlur={field.onBlur}
                 name={field.name}
-                value={field.value || ""}
+                value={field.value ?? ""}
                 disabled={field.disabled}
                 ref={field.ref as React.Ref<HTMLInputElement>}
               />

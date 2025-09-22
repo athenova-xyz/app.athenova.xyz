@@ -39,37 +39,52 @@ export function FormTextarea<
   rows = 4,
   className,
 }: FormTextareaProps<TFieldValues, TName>) {
+  const inputId = React.useId();
+  const helpId = helperText ? `${inputId}-help` : undefined;
   return (
     <FormField
       control={control}
       name={name}
-      render={({ field, fieldState }) => (
-        <FormItem className={className}>
-          <FormLabel>
-            {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
-          </FormLabel>
-          <FormControl>
-            <Textarea
-              placeholder={placeholder}
-              rows={rows}
-              required={required}
-              value={field.value || ""}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              name={field.name}
-              disabled={field.disabled}
-              ref={field.ref as React.Ref<HTMLTextAreaElement>}
-            />
-          </FormControl>
-          {helperText && (
-            <div className="text-sm text-gray-500 dark:text-gray-400 my-1">
-              {helperText}
-            </div>
-          )}
-          <FormMessage>{fieldState.error?.message}</FormMessage>
-        </FormItem>
-      )}
+      render={({ field, fieldState }) => {
+        const errorId = fieldState.error ? `${inputId}-error` : undefined;
+        const describedBy =
+          [helpId, errorId].filter(Boolean).join(" ") || undefined;
+        return (
+          <FormItem className={className}>
+            <FormLabel htmlFor={inputId}>
+              {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
+            </FormLabel>
+            <FormControl>
+              <Textarea
+                id={inputId}
+                placeholder={placeholder}
+                rows={rows}
+                required={required}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                aria-required={required}
+                aria-invalid={!!fieldState.error}
+                aria-describedby={describedBy}
+                ref={field.ref as React.Ref<HTMLTextAreaElement>}
+              />
+            </FormControl>
+            {helperText && (
+              <div
+                id={helpId}
+                className="text-sm text-gray-500 dark:text-gray-400 my-1"
+              >
+                {helperText}
+              </div>
+            )}
+            <FormMessage id={`${inputId}-error`}>
+              {fieldState.error?.message}
+            </FormMessage>
+          </FormItem>
+        );
+      }}
     />
   );
 }

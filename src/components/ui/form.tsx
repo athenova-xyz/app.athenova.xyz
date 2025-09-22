@@ -43,40 +43,44 @@ export function FormItem({
   return <div className={`space-y-2 ${className || ""}`}>{children}</div>;
 }
 
-export function FormLabel({
-  children,
-  className,
-}: {
+export interface FormLabelProps {
   children?: React.ReactNode;
   className?: string;
-}) {
+  htmlFor?: string;
+}
+
+export function FormLabel({ children, className, htmlFor }: FormLabelProps) {
   return (
-    <label className={`text-sm font-medium ${className || ""}`}>
+    <label
+      htmlFor={htmlFor}
+      className={`text-sm font-medium ${className || ""}`}
+    >
       {children}
     </label>
   );
 }
 
-export function FormControl({
-  children,
-  className,
-}: {
+export interface FormControlProps {
   children?: React.ReactNode;
   className?: string;
-}) {
+}
+
+export function FormControl({ children, className }: FormControlProps) {
   return <div className={className}>{children}</div>;
 }
 
-export function FormMessage({
-  children,
-  className,
-}: {
+export interface FormMessageProps {
   children?: React.ReactNode;
   className?: string;
-}) {
-  return children ? (
-    <p className={`text-sm text-red-500 ${className || ""}`}>{children}</p>
-  ) : null;
+  id?: string;
+}
+
+export function FormMessage({ children, className, id }: FormMessageProps) {
+  return (
+    <div id={id} className={`text-sm text-red-500 ${className || ""}`}>
+      {children}
+    </div>
+  );
 }
 
 export interface FormFieldProps<
