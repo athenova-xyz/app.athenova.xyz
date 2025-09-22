@@ -12,6 +12,7 @@ import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { EmailLoginCard } from "@/components/models/auth/EmailLoginCard";
 
 export default function GetStartedPage() {
   const { address, isConnected } = useAccount();
@@ -27,6 +28,7 @@ export default function GetStartedPage() {
     createdAt: Date;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
 
   const handleLogin = async () => {
     if (!isConnected || !address) return;
@@ -174,6 +176,7 @@ export default function GetStartedPage() {
                   className="w-full py-3 border border-auth bg-card text-foreground hover:bg-accent hover:text-accent-foreground shadow-none font-sans text-sm"
                   variant="outline"
                   type="button"
+                  onClick={() => setShowEmailLogin(true)}
                 >
                   Log in with Email
                 </Button>
@@ -283,6 +286,19 @@ export default function GetStartedPage() {
                     Log in to your account
                   </p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {showEmailLogin && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+              <div
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setShowEmailLogin(false)}
+                aria-hidden
+              />
+              <div className="relative z-50 w-full max-w-md">
+                <EmailLoginCard />
               </div>
             </div>
           )}
