@@ -8,8 +8,6 @@ export const signinAction = actionClient
     .inputSchema(signinSchema)
     .metadata({ actionName: 'signin' })
     .action(async ({ parsedInput }) => {
-        const { email } = parsedInput;
-
         try {
             const result = await signin(parsedInput as SigninInput);
 
@@ -26,7 +24,7 @@ export const signinAction = actionClient
                 throw new Error(error.message, { cause: error });
             }
 
-            console.error('Sign in error:', error, { email });
+            console.error('Sign in error:', { message: error.message, email: '[redacted]' });
             throw new Error('Something went wrong');
         }
     });
