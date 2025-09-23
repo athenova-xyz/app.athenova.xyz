@@ -1,12 +1,8 @@
 "use client";
 
 import React from "react";
-import { CourseCreateForm } from "@/components/models/courses/CourseCreateForm";
+import { CreateCourseForm } from "@/components/models/courses/CreateCourseForm";
 
 export function CreateCoursePageContainer() {
-  return (
-    <div>
-      <CourseCreateForm />
-    </div>
-  );
+  return <CreateCourseForm />;
 }
