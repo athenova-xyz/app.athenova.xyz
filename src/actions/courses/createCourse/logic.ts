@@ -4,17 +4,20 @@ import { CreateCourseInput } from "./schema";
 import type { Course } from "@prisma/client";
 
 export async function createCourse(input: CreateCourseInput, userId: string): Promise<Result<Course>> {
-    try {
-        const course = await prisma.course.create({
-            data: {
-                title: input.title,
-                description: input.description,
-                authorId: userId,
-            },
-        });
-        return success(course);
-    } catch (error) {
+    const course = await prisma.course.create({
+        data: {
+            title: input.title,
+            description: input.description,
+            authorId: userId,
+        },
+    }).catch(error => {
         console.error("Course creation error:", error, { userId });
+        return null;
+    });
+
+    if (!course) {
         return failure("Failed to create course");
     }
+
+    return success(course);
 }

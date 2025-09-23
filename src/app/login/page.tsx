@@ -115,7 +115,7 @@ export default function GetStartedPage() {
       const user = userResult.data;
       setUserProfile({
         id: user.id,
-        walletAddress: user.walletAddress,
+        walletAddress: user.walletAddress || "",
         role: user.role.toString(),
         lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt) : null,
         createdAt: new Date(user.createdAt),

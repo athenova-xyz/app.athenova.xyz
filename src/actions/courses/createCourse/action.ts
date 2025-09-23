@@ -13,15 +13,11 @@ export const createCourseAction = authActionClient
             throw new Error('Not Authorised');
         }
 
-        try {
-            const createdCourseResult = await createCourse(parsedInput, userId);
-            if (createdCourseResult.success) {
-                return createdCourseResult.data;
-            }
+        const result = await createCourse(parsedInput, userId);
 
-            throw new Error(createdCourseResult.error);
-        } catch (error) {
-            console.error('Course creation error:', error, { userId });
-            throw new Error('Something went wrong', { cause: error });
+        if (result.success) {
+            return result.data;
         }
+
+        throw new Error(result.error, { cause: { internal: true } });
     });

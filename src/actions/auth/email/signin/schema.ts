@@ -1,8 +1,8 @@
-import * as z from 'zod';
+import { z } from 'zod';
 
-export const signInSchema = z.object({
-    email: z.string().email(),
-    password: z.string().nonempty(),
+export const signinSchema = z.object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(1, 'Password is required'),
 });
 
-export type SignInInput = z.infer<typeof signInSchema>;
+export type SigninInput = z.infer<typeof signinSchema>;

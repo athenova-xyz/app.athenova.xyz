@@ -2,46 +2,30 @@
 
 import { actionClient } from '@/lib/action';
 import { signup } from './logic';
-import { signupSchema } from './schema';
-import { getSession } from '@/lib/session';
-
-type SignupActionResult = {
-    serverError?: string;
-    data?: {
-        id: string;
-        email: string | null;
-        role: string;
-    };
-};
+import { signupSchema, SignupInput } from './schema';
 
 export const signupAction = actionClient
     .inputSchema(signupSchema)
     .metadata({ actionName: 'signup' })
-    .action(async ({ parsedInput, ctx }): Promise<SignupActionResult> => {
-        // Validate required fields
-        if (!parsedInput.email) {
-            return { serverError: 'Email is required' };
-        }
-
-        let result;
+    .action(async ({ parsedInput }) => {
         try {
-            result = await signup(parsedInput);
+            const result = await signup(parsedInput as SignupInput);
+
+            if (result.success) {
+                return result.data;
+            }
+
+            // Set session
+            throw new Error(result.error, { cause: { internal: true } });
         } catch (err) {
-            console.error('signup() threw an error:', err);
-            return { serverError: 'Failed to create account. Please try again.' };
-        }
+            const error = err as Error;
+            const cause = error.cause as { internal: boolean } | undefined;
 
-        if (!result.success) {
-            return { serverError: result.error };
-        }
+            if (cause?.internal) {
+                throw new Error(error.message, { cause: error });
+            }
 
-        try {
-            const { session } = ctx as { session: Awaited<ReturnType<typeof getSession>> };
-            session.user = { id: result.data.id };
-            await session.save();
-            return { data: result.data };
-        } catch (sessionError) {
-            console.error('Session creation error:', sessionError);
-            return { serverError: "Account created, but couldn't sign you in automatically. Please log in." };
+            console.error('Sign up error:', error);
+            throw new Error('Something went wrong');
         }
     });

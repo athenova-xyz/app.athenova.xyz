@@ -23,7 +23,7 @@ enum UserRole {
 
 model User {
   id            String   @id @default(cuid())
-  walletAddress String   @unique @db.VarChar(64) // store lowercased 0x-prefixed hex (EIP-55 checksum not preserved)
+  walletAddress String?  @unique @db.VarChar(64) // store lowercased 0x-prefixed hex (EIP-55 checksum not preserved)
   role          UserRole @default(LEARNER)
 
   username     String? @unique @db.Citext // optional handle (case-insensitive)

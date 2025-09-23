@@ -9,7 +9,7 @@ import { SigninInput } from './schema';
 
 type UserData = {
     id: string;
-    walletAddress: string;
+    walletAddress: string | null;
     role: string;
     lastLoginAt: Date | null;
     createdAt: Date;

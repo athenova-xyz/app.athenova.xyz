@@ -1,48 +1,32 @@
-/**
- * Minimal local signIn implementation to satisfy types and allow compilation.
- * Replace this with the real authentication logic or import from the actual module.
- */
-'use server';
+"use server";
 
 import { actionClient } from '@/lib/action';
-import { signInSchema } from './schema';
-import { getSession } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import { signin } from './logic';
+import { signinSchema, SigninInput } from './schema';
 
-type SignInActionResult = {
-    serverError?: string;
-    data?: { id: string; email: string | null; role: string };
-};
-
-export const signInWithEmailAction = actionClient
-    .inputSchema(signInSchema)
-    .metadata({ actionName: 'signInWithEmail' })
-    .action(async ({ parsedInput, ctx }): Promise<SignInActionResult> => {
-        if (!parsedInput.email || !parsedInput.password) {
-            return { serverError: 'Email and password are required' };
-        }
+export const signinAction = actionClient
+    .inputSchema(signinSchema)
+    .metadata({ actionName: 'signin' })
+    .action(async ({ parsedInput }) => {
+        const { email } = parsedInput;
 
         try {
-            const user = await prisma.user.findUnique({ where: { email: parsedInput.email } });
+            const result = await signin(parsedInput as SigninInput);
 
-            if (!user || !user.passwordHash) {
-                return { serverError: 'Invalid credentials' };
+            if (result.success) {
+                return result.data;
             }
 
-            const match = await bcrypt.compare(parsedInput.password, user.passwordHash);
-
-            if (!match) {
-                return { serverError: 'Invalid credentials' };
-            }
-
-            const { session } = ctx as { session: Awaited<ReturnType<typeof getSession>> };
-            session.user = { id: user.id };
-            await session.save();
-
-            return { data: { id: user.id, email: user.email, role: user.role } };
+            throw new Error(result.error, { cause: { internal: true } });
         } catch (err) {
-            console.error('signIn action failed:', err);
-            return { serverError: 'Sign in failed. Please try again.' };
+            const error = err as Error;
+            const cause = error.cause as { internal: boolean } | undefined;
+
+            if (cause?.internal) {
+                throw new Error(error.message, { cause: error });
+            }
+
+            console.error('Sign in error:', error, { email });
+            throw new Error('Something went wrong');
         }
     });
