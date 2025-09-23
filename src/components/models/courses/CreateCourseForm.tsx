@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createCourseSchema } from "@/actions/courses/createCourse/schema";
 import { useAction } from "next-safe-action/hooks";
 import { createCourseAction } from "@/actions/courses/createCourse/action";
-import { toast } from "sonner";
+import { toast } from "../../ui/sonner";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 
