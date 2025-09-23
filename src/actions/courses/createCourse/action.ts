@@ -19,9 +19,16 @@ export const createCourseAction = authActionClient
                 return result.data;
             }
 
-            throw new Error(result.error);
+            throw new Error(result.error, { cause: { internal: true } });
         } catch (err) {
-            console.error('Create course action failed:', err);
+            const error = err as Error;
+            const cause = error.cause as { internal: boolean } | undefined;
+
+            if (cause?.internal) {
+                throw new Error(error.message);
+            }
+
+            console.error('Create course error:', { message: error.message, userId });
             throw new Error('Something went wrong');
         }
     });

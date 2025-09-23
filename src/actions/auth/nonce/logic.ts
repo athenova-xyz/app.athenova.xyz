@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { hashNonce } from "@/lib/auth";

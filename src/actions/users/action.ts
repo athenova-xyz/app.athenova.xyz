@@ -7,13 +7,16 @@ export const usersAction = actionClient
     .action(async () => {
         try {
             const res = await getOrUpdateCurrentUser();
-            if (!res) throw new Error('Authentication required');
+            if (!res) throw new Error('Authentication required', { cause: { internal: true } });
             return res;
         } catch (err) {
             const error = err as Error;
-            if (error.message === 'Authentication required') {
-                throw error;
+            const cause = error.cause as { internal: boolean } | undefined;
+
+            if (cause?.internal && error.message === 'Authentication required') {
+                throw new Error(error.message);
             }
+
             console.error('usersAction failed:', error);
             throw new Error('Something went wrong');
         }

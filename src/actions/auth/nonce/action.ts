@@ -13,9 +13,16 @@ export const issueNonceAction = actionClient
                 return result.data;
             }
 
-            throw new Error(result.error);
+            throw new Error(result.error, { cause: { internal: true } });
         } catch (err) {
-            console.error('Issue nonce action failed:', err);
+            const error = err as Error;
+            const cause = error.cause as { internal: boolean } | undefined;
+
+            if (cause?.internal) {
+                throw new Error(error.message);
+            }
+
+            console.error('Issue nonce error:', { message: error.message });
             throw new Error('Something went wrong');
         }
     });

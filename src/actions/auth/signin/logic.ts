@@ -1,86 +1,59 @@
 import 'server-only';
 
-import { SiweMessage, type VerifyParams } from 'siwe';
-import { hashNonce, consumeNonce } from '@/lib/auth';
-import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { Result, success } from '@/lib/result';
-import { SigninInput } from './schema';
+import { Result, success, failure } from '@/lib/result';
+import bcryptjs from 'bcryptjs';
+import { SigninInput } from '../email/signin/schema';
+import { getSession } from '@/lib/session';
 
-type UserData = {
+type UserWithoutPassword = {
     id: string;
-    walletAddress: string | null;
+    displayName: string | null;
+    email: string;
     role: string;
-    lastLoginAt: Date | null;
-    createdAt: Date;
 };
 
-export async function signin(input: SigninInput, headers: Headers): Promise<Result<UserData>> {
-    const { message: messageStr, signature } = input;
+export async function signin(input: SigninInput): Promise<Result<UserWithoutPassword>> {
+    const { email, password } = input;
 
-    const siwe = new SiweMessage(messageStr);
-    const nonce = siwe.nonce;
-    if (!nonce) throw new Error('Invalid SIWE message: missing nonce');
+    const normalisedEmail = email.trim().toLowerCase();
 
-    const forwardedHostHeader = headers.get('x-forwarded-host') || headers.get('host') || '';
-
-    let expectedDomain: string;
-    if (process.env.NODE_ENV === 'production') {
-        if (process.env.SIWE_DOMAIN && process.env.SIWE_DOMAIN.trim() !== '') {
-            expectedDomain = process.env.SIWE_DOMAIN;
-        } else {
-            throw new Error('SIWE_DOMAIN must be set in production');
+    // Find user by email
+    const user = await prisma.user.findUnique({
+        where: { email: normalisedEmail },
+        select: {
+            id: true,
+            displayName: true,
+            email: true,
+            passwordHash: true,
+            role: true
         }
-    } else {
-        expectedDomain = process.env.SIWE_DOMAIN ?? forwardedHostHeader;
-    }
-
-    const expectedChainId = process.env.SIWE_CHAIN_ID ? parseInt(process.env.SIWE_CHAIN_ID, 10) : undefined;
-    const expectedStatement = process.env.SIWE_STATEMENT ?? undefined;
-
-    if (expectedChainId && siwe.chainId !== expectedChainId) {
-        throw new Error(`Chain mismatch, expected ${expectedChainId}`);
-    }
-
-    if (expectedStatement && siwe.statement !== expectedStatement) {
-        throw new Error('SIWE statement mismatch');
-    }
-
-    const rpcUrl = process.env.SIWE_RPC_URL || process.env.RPC_URL || (expectedChainId === 1 ? 'https://cloudflare-eth.com' : undefined);
-    const provider = rpcUrl ? new (await import('ethers')).JsonRpcProvider(rpcUrl) : undefined;
-
-    const verifyOptions: VerifyParams & { provider?: import('ethers').JsonRpcProvider } = {
-        signature,
-        domain: expectedDomain,
-        nonce
-    };
-
-    if (provider) {
-        verifyOptions.provider = provider;
-    }
-
-    await siwe.verify(verifyOptions);
-
-    const hashed = hashNonce(nonce);
-    const consumed = await consumeNonce(hashed);
-    if (!consumed) throw new Error('Nonce invalid or already used');
-
-    const walletAddr = siwe.address.toLowerCase();
-    let user = await prisma.user.findUnique({ where: { walletAddress: walletAddr } });
-    if (!user) {
-        user = await prisma.user.create({ data: { walletAddress: walletAddr } });
-    }
-
-    // Update last login
-    const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: { lastLoginAt: new Date() },
-        select: { id: true, walletAddress: true, role: true, lastLoginAt: true, createdAt: true }
     });
 
+    if (!user || !user.passwordHash) {
+        console.error('Signin error: User not found or no password');
+        return failure('Invalid credentials');
+    }
+
+    // Verify password
+    const isValidPassword = await bcryptjs.compare(password, user.passwordHash);
+    if (!isValidPassword) {
+        console.error('Signin error: Invalid password');
+        return failure('Invalid credentials');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
+
+    // Set session
     const session = await getSession();
-    session.user = { id: user.id };
+    session.user = { id: userWithoutPassword.id };
     await session.save();
 
-    return success(updatedUser);
+    return success({
+        id: userWithoutPassword.id,
+        displayName: userWithoutPassword.displayName,
+        email: userWithoutPassword.email!, // We know email exists since we found user by email
+        role: userWithoutPassword.role.toString()
+    });
 }

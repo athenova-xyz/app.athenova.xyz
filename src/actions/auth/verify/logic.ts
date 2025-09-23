@@ -1,4 +1,7 @@
+import 'server-only';
+
 import { SiweMessage, type VerifyParams } from 'siwe';
+import { JsonRpcProvider } from 'ethers';
 import { hashNonce, consumeNonce } from '@/lib/auth';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
@@ -41,9 +44,9 @@ export async function verifySiwe(messageStr: string, signature: string, headers:
     }
 
     const rpcUrl = process.env.SIWE_RPC_URL || process.env.RPC_URL || (expectedChainId === 1 ? 'https://cloudflare-eth.com' : undefined);
-    const provider = rpcUrl ? new (await import('ethers')).JsonRpcProvider(rpcUrl) : undefined;
+    const provider = rpcUrl ? new JsonRpcProvider(rpcUrl) : undefined;
 
-    const verifyOptions: VerifyParams & { provider?: import('ethers').JsonRpcProvider } = {
+    const verifyOptions: VerifyParams & { provider?: JsonRpcProvider } = {
         signature,
         domain: expectedDomain,
         nonce
@@ -53,14 +56,8 @@ export async function verifySiwe(messageStr: string, signature: string, headers:
         verifyOptions.provider = provider;
     }
 
-    const verifyResult = await siwe.verify(verifyOptions).catch(err => {
-        console.error('Verify error: SIWE verification failed', err);
-        return null;
-    });
-
-    if (!verifyResult) {
-        return failure('SIWE verification failed');
-    }
+    // Check verification without catching - if it fails, it will throw and be caught by action layer
+    await siwe.verify(verifyOptions);
 
     const hashed = hashNonce(nonce);
     const consumed = await consumeNonce(hashed);
