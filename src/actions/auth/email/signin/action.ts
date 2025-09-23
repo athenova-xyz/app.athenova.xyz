@@ -21,7 +21,7 @@ export const signinAction = actionClient
             const cause = error.cause as { internal: boolean } | undefined;
 
             if (cause?.internal) {
-                throw new Error(error.message, { cause: error });
+                throw new Error(error.message);
             }
 
             console.error('Sign in error:', { message: error.message, email: '[redacted]' });

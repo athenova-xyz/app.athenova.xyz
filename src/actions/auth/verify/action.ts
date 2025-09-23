@@ -8,11 +8,16 @@ export const verifySiweAction = actionClient
     .inputSchema(verifySiweSchema)
     .metadata({ actionName: 'auth.verifySiwe' })
     .action(async ({ parsedInput, ctx }) => {
-        const result = await verifySiwe(parsedInput.message, parsedInput.signature, ctx.headers);
+        try {
+            const result = await verifySiwe(parsedInput.message, parsedInput.signature, ctx.headers);
 
-        if (result.success) {
-            return result.data;
+            if (result.success) {
+                return result.data;
+            }
+
+            throw new Error(result.error);
+        } catch (err) {
+            console.error('Verify action failed:', err);
+            throw new Error('Something went wrong');
         }
-
-        throw new Error(result.error, { cause: { internal: true } });
     });

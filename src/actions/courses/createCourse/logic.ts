@@ -1,5 +1,7 @@
+import 'server-only';
+
 import { prisma } from "@/lib/prisma";
-import { Result, success, failure } from "@/lib/result";
+import { Result, success } from "@/lib/result";
 import { CreateCourseInput } from "./schema";
 import type { Course } from "@prisma/client";
 
@@ -10,14 +12,7 @@ export async function createCourse(input: CreateCourseInput, userId: string): Pr
             description: input.description,
             authorId: userId,
         },
-    }).catch(error => {
-        console.error("Course creation error:", error, { userId });
-        return null;
     });
-
-    if (!course) {
-        return failure("Failed to create course");
-    }
 
     return success(course);
 }

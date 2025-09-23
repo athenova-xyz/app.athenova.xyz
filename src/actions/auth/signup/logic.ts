@@ -42,7 +42,7 @@ export async function signup(input: SignupInput): Promise<Result<User>> {
             displayName: name,
             email: normalisedEmail,
             passwordHash: hashedPassword,
-            walletAddress: `email-${Date.now()}-${Math.random().toString(36).substring(7)}`
+            walletAddress: null
         },
         select: {
             id: true,

@@ -22,7 +22,7 @@ export const signupAction = actionClient
             const cause = error.cause as { internal: boolean } | undefined;
 
             if (cause?.internal) {
-                throw new Error(error.message, { cause: error });
+                throw new Error(error.message);
             }
 
             console.error('Sign up error:', error);

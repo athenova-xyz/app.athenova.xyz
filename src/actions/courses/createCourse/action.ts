@@ -12,12 +12,16 @@ export const createCourseAction = authActionClient
         if (!userId) {
             throw new Error('Not Authorised');
         }
+        try {
+            const result = await createCourse(parsedInput, userId);
 
-        const result = await createCourse(parsedInput, userId);
+            if (result.success) {
+                return result.data;
+            }
 
-        if (result.success) {
-            return result.data;
+            throw new Error(result.error);
+        } catch (err) {
+            console.error('Create course action failed:', err);
+            throw new Error('Something went wrong');
         }
-
-        throw new Error(result.error, { cause: { internal: true } });
     });

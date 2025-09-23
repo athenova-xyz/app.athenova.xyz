@@ -6,7 +6,7 @@ import Link from "next/link";
 import { issueNonceAction } from "@/actions/auth/nonce/action";
 import { verifySiweAction } from "@/actions/auth/verify/action";
 import { usersAction } from "@/actions/users/action";
-import { logoutAction } from "@/actions/auth/logout/action";
+import { signoutAction } from "@/actions/auth/logout/action";
 import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import { SiweMessage } from "siwe";
 import { cn } from "@/lib/utils";
@@ -133,7 +133,7 @@ export default function GetStartedPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await logoutAction();
+      const result = await signoutAction();
       if (result?.serverError) throw new Error("Failed to logout");
       if (!result?.data) throw new Error("Failed to logout");
     } catch (e) {

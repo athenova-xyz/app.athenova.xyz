@@ -20,6 +20,6 @@ export const signinAction = actionClient
             return result.data;
         } catch (error) {
             console.error('Signin error:', error);
-            throw new Error((error as Error).message, { cause: error });
+            throw new Error((error as Error).message);
         }
     });
