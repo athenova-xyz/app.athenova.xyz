@@ -6,7 +6,7 @@ export default async function SignupPage() {
   const session = await getSession();
 
   if (session.user?.id) {
-    redirect('/courses/create');
+    redirect('/');
   }
 
   return <SignupPageContainer />;
