@@ -1,5 +1,5 @@
-import { CourseForm } from "./CourseForm";
+import { CreateCoursePageContainer } from '@/components/pages/create/CreateCoursePageContainer';
 
 export default function CreateCourse() {
-  return <CourseForm />;
+  return <CreateCoursePageContainer />;
 }

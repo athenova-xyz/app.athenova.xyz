@@ -1,39 +1,21 @@
-"use client";
+'use client';
 
-import React from "react";
-import {
-  RainbowKitProvider,
-  connectorsForWallets,
-} from "@rainbow-me/rainbowkit";
-import {
-  metaMaskWallet,
-  walletConnectWallet,
-  coinbaseWallet,
-  rainbowWallet,
-} from "@rainbow-me/rainbowkit/wallets";
-import {
-  createConfig,
-  WagmiProvider,
-  http,
-  createStorage,
-  cookieStorage,
-} from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from 'react';
+import { RainbowKitProvider, connectorsForWallets } from '@rainbow-me/rainbowkit';
+import { metaMaskWallet, walletConnectWallet, coinbaseWallet, rainbowWallet } from '@rainbow-me/rainbowkit/wallets';
+import { createConfig, WagmiProvider, http, createStorage, cookieStorage } from 'wagmi';
+import { mainnet, sepolia } from 'wagmi/chains';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const projectId = (
-  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? ""
-).trim();
+const projectId = (process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '').trim();
 
 // In production we require a WalletConnect project id. In development we
 // silently omit the WalletConnect connector so local testing doesn't need it.
-if (process.env.NODE_ENV === "production" && !projectId) {
+if (process.env.NODE_ENV === 'production' && !projectId) {
   // Don't throw at module init in a client component; warn and omit WalletConnect.
   // CI/CD should enforce presence of NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID before deploy.
   // Throwing here would break any page that imports this file.
-  console.warn(
-    "WalletConnect disabled: missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID"
-  );
+  console.warn('WalletConnect disabled: missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID');
 }
 
 // Build the wallets array conditionally — include WalletConnect only when a
@@ -49,15 +31,15 @@ const recommendedWallets = projectId
 // omit that field so WalletConnect isn't configured.
 type ConnectorsOptions = Parameters<typeof connectorsForWallets>[1];
 const connectorOptions: ConnectorsOptions = projectId
-  ? { appName: "Athenova", projectId }
-  : ({ appName: "Athenova" } as ConnectorsOptions);
+  ? { appName: 'Athenova', projectId }
+  : ({ appName: 'Athenova' } as ConnectorsOptions);
 
 const connectors = connectorsForWallets(
   [
     {
-      groupName: "Recommended",
-      wallets: recommendedWallets,
-    },
+      groupName: 'Recommended',
+      wallets: recommendedWallets
+    }
   ],
   connectorOptions
 );
@@ -70,12 +52,12 @@ const config = createConfig({
   chains: [mainnet, sepolia],
   transports: {
     [mainnet.id]: http(process.env.NEXT_PUBLIC_MAINNET_RPC_URL),
-    [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL),
+    [sepolia.id]: http(process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL)
   },
   storage: createStorage({
-    storage: cookieStorage,
+    storage: cookieStorage
   }),
-  ssr: true,
+  ssr: true
 });
 
 const queryClient = new QueryClient();
