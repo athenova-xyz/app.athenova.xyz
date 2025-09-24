@@ -1,11 +1,11 @@
-import { PrismaClient, CourseStatus } from '@prisma/client'
-import { faker } from '@faker-js/faker'
-import { getAddress } from 'ethers'
+import { PrismaClient, CourseStatus } from '@prisma/client';
+import { faker } from '@faker-js/faker';
+import { getAddress } from 'ethers';
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding database...')
+  console.log('Seeding database...');
 
   // Create 5 users
   const users = await Promise.all(
@@ -19,21 +19,17 @@ async function main() {
           email: faker.internet.email().toLowerCase(),
           avatarUrl: faker.image.avatar(),
           bio: faker.lorem.sentence(),
-          metadata: {},
-        },
+          metadata: {}
+        }
       })
     )
-  )
+  );
 
   // Each user gets 1-3 courses
   for (const user of users) {
-    const courseCount = faker.number.int({ min: 1, max: 3 })
+    const courseCount = faker.number.int({ min: 1, max: 3 });
     for (let i = 0; i < courseCount; i++) {
-      const status = faker.helpers.arrayElement([
-        CourseStatus.DRAFT,
-        CourseStatus.PUBLISHED,
-        CourseStatus.ARCHIVED,
-      ])
+      const status = faker.helpers.arrayElement([CourseStatus.DRAFT, CourseStatus.PUBLISHED, CourseStatus.ARCHIVED]);
       await prisma.course.create({
         data: {
           title: faker.lorem.words({ min: 3, max: 8 }),
@@ -42,20 +38,20 @@ async function main() {
           status,
           version: 1,
           description: faker.lorem.paragraphs({ min: 1, max: 3 }),
-          publishedAt: status === CourseStatus.PUBLISHED ? faker.date.past() : null,
-        },
-      })
+          publishedAt: status === CourseStatus.PUBLISHED ? faker.date.past() : null
+        }
+      });
     }
   }
 
-  console.log('Seed complete.')
+  console.log('Seed complete.');
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

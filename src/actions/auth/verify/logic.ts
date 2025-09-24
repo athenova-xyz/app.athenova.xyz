@@ -1,70 +1,44 @@
-import { SiweMessage, type VerifyParams } from 'siwe';
-import { hashNonce, consumeNonce } from '@/lib/auth';
-import { getSession } from '@/lib/session';
+import 'server-only';
+
+import { consumeNonce, hashNonce } from '@/lib/auth';
+import { SIWE_DOMAIN } from '@/lib/env';
 import { prisma } from '@/lib/prisma';
+import { failure, Result, success } from '@/lib/result';
+import { getSession } from '@/lib/session';
+import { SiweMessage } from 'siwe';
+import { VerifySiweInput } from './schema';
 
-export async function verifySiwe(messageStr: string, signature: string, headers: Headers) {
-    const siwe = new SiweMessage(messageStr);
-    const nonce = siwe.nonce;
-    if (!nonce) throw new Error('Invalid SIWE message: missing nonce');
+export async function verifySiwe(input: VerifySiweInput): Promise<Result<{ success: boolean }>> {
+  const siwe = new SiweMessage(input.message);
+  const nonce = siwe.nonce;
+  if (!nonce) {
+    console.error('Verify error: Invalid SIWE message: missing nonce');
+    return failure('Invalid SIWE message: missing nonce');
+  }
 
-    const forwardedHostHeader = headers.get('x-forwarded-host') || headers.get('host') || '';
+  // Check verification without catching - if it fails, it will throw and be caught by action layer
+  await siwe.verify({
+    signature: input.signature,
+    domain: SIWE_DOMAIN,
+    nonce
+  });
 
-    let expectedDomain: string;
-    if (process.env.NODE_ENV === 'production') {
-        if (process.env.SIWE_DOMAIN && process.env.SIWE_DOMAIN.trim() !== '') {
-            expectedDomain = process.env.SIWE_DOMAIN;
-        } else {
-            throw new Error('SIWE_DOMAIN must be set in production');
-        }
-    } else {
-        expectedDomain = process.env.SIWE_DOMAIN ?? forwardedHostHeader;
-    }
+  const hashed = hashNonce(nonce);
+  const consumed = await consumeNonce(hashed);
+  if (!consumed) {
+    console.error('Verify error: Nonce invalid or already used');
+    return failure('Nonce invalid or already used');
+  }
 
-    // Constructed URI is not needed for verification but kept intentionally omitted
-    const expectedChainId = process.env.SIWE_CHAIN_ID ? parseInt(process.env.SIWE_CHAIN_ID, 10) : undefined;
-    const expectedStatement = process.env.SIWE_STATEMENT ?? undefined;
+  const walletAddr = siwe.address.toLowerCase();
+  let user = await prisma.user.findUnique({ where: { walletAddress: walletAddr } });
+  if (!user) {
+    user = await prisma.user.create({ data: { walletAddress: walletAddr } });
+  }
 
-    if (expectedChainId && siwe.chainId !== expectedChainId) {
-        throw new Error(`Chain mismatch, expected ${expectedChainId}`);
-    }
+  const session = await getSession();
+  session.user = { id: user.id };
+  await session.save();
 
-    if (expectedStatement && siwe.statement !== expectedStatement) {
-        throw new Error('SIWE statement mismatch');
-    }
-
-    try {
-        const rpcUrl = process.env.SIWE_RPC_URL || process.env.RPC_URL || (expectedChainId === 1 ? 'https://cloudflare-eth.com' : undefined);
-        const provider = rpcUrl ? new (await import('ethers')).JsonRpcProvider(rpcUrl) : undefined;
-
-        const verifyOptions: VerifyParams & { provider?: import('ethers').JsonRpcProvider } = {
-            signature,
-            domain: expectedDomain,
-            nonce
-        };
-
-        if (provider) {
-            verifyOptions.provider = provider;
-        }
-
-        await siwe.verify(verifyOptions);
-    } catch (err) {
-        throw err;
-    }
-
-    const hashed = hashNonce(nonce);
-    const consumed = await consumeNonce(hashed);
-    if (!consumed) throw new Error('Nonce invalid or already used');
-
-    const walletAddr = siwe.address.toLowerCase();
-    let user = await prisma.user.findUnique({ where: { walletAddress: walletAddr } });
-    if (!user) {
-        user = await prisma.user.create({ data: { walletAddress: walletAddr } });
-    }
-
-    const session = await getSession();
-    session.user = { id: user.id };
-    await session.save();
-
-    return { success: true };
+  return success({ success: true });
 }

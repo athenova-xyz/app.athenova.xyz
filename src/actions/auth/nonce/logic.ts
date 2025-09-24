@@ -1,30 +1,40 @@
-import { randomBytes } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { hashNonce } from "@/lib/auth";
+import 'server-only';
 
-export async function issueNonce() {
-    let nonce = randomBytes(16).toString("hex");
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+import { randomBytes } from 'crypto';
+import { prisma } from '@/lib/prisma';
+import { hashNonce } from '@/lib/auth';
+import { Result, success, failure } from '@/lib/result';
 
-    const maxRetries = 2;
-    let created = null;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        const hashed = hashNonce(nonce);
-        try {
-            created = await prisma.nonce.create({ data: { hashed, expiresAt } });
-            break;
-        } catch (err: unknown) {
-            const prismaErr = err && typeof err === "object" && 'code' in err ? err as { code: string } : undefined;
-            const code = prismaErr && typeof prismaErr.code === "string" ? prismaErr.code : undefined;
-            if (code === "P2002" && attempt < maxRetries) {
-                nonce = randomBytes(16).toString("hex");
-                continue;
-            }
-            throw err;
-        }
+export async function issueNonce(): Promise<Result<{ nonce: string }>> {
+  let nonce = randomBytes(16).toString('hex');
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+  const maxRetries = 2;
+  let created = false;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const hashed = hashNonce(nonce);
+
+    // Check if nonce already exists
+    const existing = await prisma.nonce.findUnique({ where: { hashed } });
+
+    if (!existing) {
+      // Create the nonce since it doesn't exist
+      await prisma.nonce.create({ data: { hashed, expiresAt } });
+      created = true;
+      break;
     }
 
-    if (!created) throw new Error("Failed to create nonce after retries");
+    // If collision and we have retries left, generate new nonce
+    if (attempt < maxRetries) {
+      nonce = randomBytes(16).toString('hex');
+    }
+  }
 
-    return { nonce };
+  if (!created) {
+    console.error('Failed to create nonce after retries');
+    return failure('Failed to create nonce after retries');
+  }
+
+  return success({ nonce });
 }

@@ -1,46 +1,34 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 import {
   Controller,
   type Control,
   type FieldPath,
   type FieldValues,
   type FormState,
-  type UseFormReturn,
-} from "react-hook-form";
+  type UseFormReturn
+} from 'react-hook-form';
 
-const FormContext = React.createContext<UseFormReturn<FieldValues> | null>(
-  null
-);
+const FormContext = React.createContext<UseFormReturn<FieldValues> | null>(null);
 
 export function Form<TFieldValues extends FieldValues = FieldValues>({
   children,
   ...form
 }: React.PropsWithChildren<UseFormReturn<TFieldValues>>) {
-  return (
-    <FormContext.Provider value={form as UseFormReturn<FieldValues>}>
-      {children}
-    </FormContext.Provider>
-  );
+  return <FormContext.Provider value={form as UseFormReturn<FieldValues>}>{children}</FormContext.Provider>;
 }
 
 export function useFormField() {
   const form = React.useContext(FormContext);
   if (!form) {
-    throw new Error("useFormField must be used within a Form component");
+    throw new Error('useFormField must be used within a Form component');
   }
   return form;
 }
 
-export function FormItem({
-  children,
-  className,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) {
-  return <div className={`space-y-2 ${className || ""}`}>{children}</div>;
+export function FormItem({ children, className }: { children?: React.ReactNode; className?: string }) {
+  return <div className={`space-y-2 ${className || ''}`}>{children}</div>;
 }
 
 export interface FormLabelProps {
@@ -51,10 +39,7 @@ export interface FormLabelProps {
 
 export function FormLabel({ children, className, htmlFor }: FormLabelProps) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className={`text-sm font-medium ${className || ""}`}
-    >
+    <label htmlFor={htmlFor} className={`text-sm font-medium ${className || ''}`}>
       {children}
     </label>
   );
@@ -77,7 +62,7 @@ export interface FormMessageProps {
 
 export function FormMessage({ children, className, id }: FormMessageProps) {
   return (
-    <div id={id} className={`text-sm text-red-500 ${className || ""}`}>
+    <div id={id} className={`text-sm text-red-500 ${className || ''}`}>
       {children}
     </div>
   );
@@ -92,7 +77,7 @@ export interface FormFieldProps<
   render: ({
     field,
     fieldState,
-    formState,
+    formState
   }: {
     field: {
       value: TFieldValues[TName];
@@ -120,9 +105,7 @@ export function FormField<
     <Controller
       control={control}
       name={name}
-      render={({ field, fieldState, formState }) =>
-        render({ field, fieldState, formState })
-      }
+      render={({ field, fieldState, formState }) => render({ field, fieldState, formState })}
     />
   );
 }

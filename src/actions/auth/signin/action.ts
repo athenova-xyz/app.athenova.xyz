@@ -3,23 +3,30 @@
 import { actionClient } from '@/lib/action';
 import { signin } from './logic';
 import { signinSchema } from './schema';
-import { headers } from 'next/headers';
 
 export const signinAction = actionClient
-    .inputSchema(signinSchema)
-    .metadata({ actionName: 'signin' })
-    .action(async ({ parsedInput }) => {
-        try {
-            const headersList = await headers();
-            const result = await signin(parsedInput, headersList);
+  .inputSchema(signinSchema)
+  .metadata({ actionName: 'signin' })
+  .action(async ({ parsedInput }) => {
+    try {
+      const result = await signin(parsedInput);
 
-            if (!result.success) {
-                throw new Error(result.error);
-            }
+      if (result.success) {
+        return result.data;
+      }
 
-            return result.data;
-        } catch (error) {
-            console.error('Signin error:', error);
-            throw new Error((error as Error).message, { cause: error });
-        }
-    });
+      throw new Error(result.error, { cause: { internal: true } });
+    } catch (err) {
+      const error = err as Error;
+      const cause = error.cause as { internal: boolean } | undefined;
+
+      if (cause?.internal) {
+        throw new Error(error.message);
+      }
+
+      console.error('Sign in error:', error, {
+        email: '[redacted]'
+      });
+      throw new Error('Something went wrong');
+    }
+  });
