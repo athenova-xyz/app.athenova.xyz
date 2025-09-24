@@ -1,4 +1,4 @@
-import { LoginPageContainer } from '@/components/pages/login/LoginPageContainer';
+import { SignupPageContainer } from '@/components/pages/signup/SignupPageContainer';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
@@ -9,5 +9,5 @@ export default async function SignupPage() {
     redirect('/');
   }
 
-  return <LoginPageContainer />;
+  return <SignupPageContainer />;
 }

@@ -1,8 +1,8 @@
 'use client';
 
+import { CreateCourseForm } from '@/components/models/courses/CreateCourseForm';
 import React from 'react';
-import { CourseCreateForm } from '@/components/models/courses/CourseCreateForm';
 
 export function CreateCoursePageContainer() {
-  return <CourseCreateForm />;
+  return <CreateCourseForm />;
 }
