@@ -1,10 +1,10 @@
-import "server-only";
+import 'server-only';
 
 const envSessionSecret = process.env.SESSION_SECRET ?? process.env.CI_SESSION_SECRET;
 
 // Allow a safe fallback for local builds (keeps developer DX) but prefer explicit secrets.
 export const SESSION_SECRET = envSessionSecret ?? 'local-dev-session-secret-32-chars-min';
-export const NODE_ENV = process.env.NODE_ENV || "development";
+export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const SIWE_DOMAIN = process.env.SIWE_DOMAIN;
 export const SIWE_URI = process.env.SIWE_URI;
 export const SIWE_CHAIN_ID = process.env.SIWE_CHAIN_ID ? parseInt(process.env.SIWE_CHAIN_ID, 10) : undefined;

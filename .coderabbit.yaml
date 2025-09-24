@@ -12,7 +12,7 @@ reviews:
     # This is the key setting to review pull requests against any base branch.
     # The '.*' is a regular expression that matches any branch name.
     base_branches:
-      - ".*"
+      - '.*'
 
     # Optional: By default, draft pull requests are not reviewed.
     # Set to true if you want Coderabbit to review drafts as well.

@@ -1,30 +1,33 @@
-"use server";
+'use server';
 
 import { actionClient } from '@/lib/action';
 import { signin } from './logic';
-import { signinSchema, SigninInput } from './schema';
+import { SigninInput, signinSchema } from './schema';
 
 export const signinAction = actionClient
-    .inputSchema(signinSchema)
-    .metadata({ actionName: 'signin' })
-    .action(async ({ parsedInput }) => {
-        try {
-            const result = await signin(parsedInput as SigninInput);
+  .inputSchema(signinSchema)
+  .metadata({ actionName: 'signin' })
+  .action(async ({ parsedInput }) => {
+    try {
+      const result = await signin(parsedInput as SigninInput);
 
-            if (result.success) {
-                return result.data;
-            }
+      if (result.success) {
+        return result.data;
+      }
 
-            throw new Error(result.error, { cause: { internal: true } });
-        } catch (err) {
-            const error = err as Error;
-            const cause = error.cause as { internal: boolean } | undefined;
+      throw new Error(result.error, { cause: { internal: true } });
+    } catch (err) {
+      const error = err as Error;
+      const cause = error.cause as { internal: boolean } | undefined;
 
-            if (cause?.internal) {
-                throw new Error(error.message);
-            }
+      if (cause?.internal) {
+        throw new Error(error.message);
+      }
 
-            console.error('Sign in error:', { message: error.message, email: '[redacted]' });
-            throw new Error('Something went wrong');
-        }
-    });
+      console.error('Sign in error:', {
+        message: error.message,
+        email: '[redacted]'
+      });
+      throw new Error('Something went wrong');
+    }
+  });

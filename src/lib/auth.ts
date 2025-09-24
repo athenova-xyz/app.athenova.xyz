@@ -1,38 +1,40 @@
-import { createHash } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { getSession } from "./session";
-import { COOKIE_NAME } from "./constants";
+import { createHash } from 'crypto';
+import { prisma } from '@/lib/prisma';
+import { getSession } from './session';
+import { COOKIE_NAME } from './constants';
 
 export { COOKIE_NAME };
 
 export function hashNonce(nonce: string) {
-    return createHash("sha256").update(nonce).digest("hex");
+  return createHash('sha256').update(nonce).digest('hex');
 }
 
 export async function consumeNonce(hashed: string) {
-    try {
-        const now = new Date();
-        const result = await prisma.nonce.updateMany({
-            where: { hashed, used: false, expiresAt: { gt: now } },
-            data: { used: true, usedAt: now },
-        });
-        if (result.count === 0) return null;
-        const updated = await prisma.nonce.findUnique({ where: { hashed } });
-        return updated ?? null;
-    } catch { return null; }
+  try {
+    const now = new Date();
+    const result = await prisma.nonce.updateMany({
+      where: { hashed, used: false, expiresAt: { gt: now } },
+      data: { used: true, usedAt: now }
+    });
+    if (result.count === 0) return null;
+    const updated = await prisma.nonce.findUnique({ where: { hashed } });
+    return updated ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // Get current user from Iron Session
 export async function getCurrentUserFromSession() {
-    try {
-        const session = await getSession();
-        if (!session.user?.id) return null;
+  try {
+    const session = await getSession();
+    if (!session.user?.id) return null;
 
-        const user = await prisma.user.findFirst({
-            where: { id: session.user.id }
-        });
-        return user ?? null;
-    } catch {
-        return null;
-    }
+    const user = await prisma.user.findFirst({
+      where: { id: session.user.id }
+    });
+    return user ?? null;
+  } catch {
+    return null;
+  }
 }

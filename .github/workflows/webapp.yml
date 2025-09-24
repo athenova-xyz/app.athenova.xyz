@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - "**"
+      - '**'
 
 jobs:
   lint-and-build:
@@ -19,8 +19,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -32,4 +32,4 @@ jobs:
         run: npm run build
         env:
           SESSION_SECRET: ${{ github.event_name == 'pull_request' && 'ci-build-session-secret-32-chars-minimum-length-required-for-iron-session' || secrets.SESSION_SECRET }}
-          NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: "next-public-walletconnect-project-id"
+          NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: 'next-public-walletconnect-project-id'

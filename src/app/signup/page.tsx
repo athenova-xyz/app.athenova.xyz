@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { signupAction } from "@/actions/auth/signup/action";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { signupAction } from '@/actions/auth/signup/action';
 
 type SignupResult = {
   serverError?: string;
@@ -13,24 +13,24 @@ type SignupResult = {
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
+    name: '',
+    email: '',
+    password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
 
     // Basic validation
     if (!formData.name || !formData.email || !formData.password) {
-      setError("Please fill in all fields");
+      setError('Please fill in all fields');
       setIsLoading(false);
       return;
     }
@@ -39,95 +39,79 @@ export default function SignUpPage() {
       const result = (await signupAction({
         name: formData.name,
         email: formData.email,
-        password: formData.password,
+        password: formData.password
       })) as SignupResult;
 
-      if (result && "serverError" in result && result.serverError) {
+      if (result && 'serverError' in result && result.serverError) {
         setError(result.serverError);
-      } else if (result && "data" in result && result.data) {
-        setSuccess("Account created successfully! Redirecting...");
-        setTimeout(() => router.replace("/login"), 900);
+      } else if (result && 'data' in result && result.data) {
+        setSuccess('Account created successfully! Redirecting...');
+        setTimeout(() => router.replace('/login'), 900);
       } else {
-        setError("Signup failed. Please try again.");
+        setError('Signup failed. Please try again.');
       }
     } catch (error) {
-      console.error("Signup error:", error);
-      setError("An unexpected error occurred. Please try again.");
+      console.error('Signup error:', error);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <main className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="p-8 bg-white rounded-lg border border-auth shadow-sm">
-          <h1 className="text-2xl font-semibold mb-2 text-foreground">
-            Create an account
-          </h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            Signup placeholder. You can wire this form to your API.
-          </p>
+    <main className='min-h-[100dvh] flex items-center justify-center bg-background px-4 py-10'>
+      <div className='w-full max-w-md'>
+        <div className='p-8 bg-white rounded-lg border border-auth shadow-sm'>
+          <h1 className='text-2xl font-semibold mb-2 text-foreground'>Create an account</h1>
+          <p className='text-sm text-muted-foreground mb-6'>Signup placeholder. You can wire this form to your API.</p>
 
           {error && (
-            <div
-              role="alert"
-              className="p-3 rounded-md bg-destructive/10 border border-destructive/20 mb-4"
-            >
-              <p className="text-sm text-destructive">{error}</p>
+            <div role='alert' className='p-3 rounded-md bg-destructive/10 border border-destructive/20 mb-4'>
+              <p className='text-sm text-destructive'>{error}</p>
             </div>
           )}
 
           {success && (
-            <div
-              role="status"
-              className="p-3 rounded-md bg-green-50 border border-green-200 mb-4"
-            >
-              <p className="text-sm text-green-800">{success}</p>
+            <div role='status' className='p-3 rounded-md bg-green-50 border border-green-200 mb-4'>
+              <p className='text-sm text-green-800'>{success}</p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className='space-y-4'>
             <input
-              name="name"
+              name='name'
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="Full name"
-              className="w-full p-3 border border-gray-200 rounded"
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder='Full name'
+              className='w-full p-3 border border-gray-200 rounded'
             />
             <input
-              name="email"
-              type="email"
+              name='email'
+              type='email'
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              placeholder="Email"
-              className="w-full p-3 border border-gray-200 rounded"
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder='Email'
+              className='w-full p-3 border border-gray-200 rounded'
               required
             />
             <input
-              name="password"
-              type="password"
+              name='password'
+              type='password'
               value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              placeholder="Password"
-              className="w-full p-3 border border-gray-200 rounded"
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder='Password'
+              className='w-full p-3 border border-gray-200 rounded'
               required
             />
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button type='submit' className='w-full' disabled={isLoading}>
+              {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>
 
-          <p className="mt-4 text-xs text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="athena-link">
+          <p className='mt-4 text-xs text-muted-foreground'>
+            Already have an account?{' '}
+            <Link href='/login' className='athena-link'>
               Log in
             </Link>
           </p>

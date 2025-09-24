@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Input } from "@/components/ui/input";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  type Control,
-} from "@/components/ui/form";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, type Control } from '@/components/ui/form';
+import type { FieldPath, FieldValues } from 'react-hook-form';
 
 export interface FormInputProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -20,7 +13,7 @@ export interface FormInputProps<
   name: TName;
   label: string;
   placeholder?: string;
-  type?: "text" | "number" | "email" | "password";
+  type?: 'text' | 'number' | 'email' | 'password';
   required?: boolean;
   helperText?: string;
   endComponent?: React.ReactNode;
@@ -38,14 +31,14 @@ export function FormInput<
   name,
   label,
   placeholder,
-  type = "text",
+  type = 'text',
   required = false,
   helperText,
   endComponent,
   min,
   max,
   step,
-  className,
+  className
 }: FormInputProps<TFieldValues, TName>) {
   return (
     <FormField
@@ -55,9 +48,9 @@ export function FormInput<
         <FormItem className={className}>
           <FormLabel>
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className='text-red-500 ml-1'>*</span>}
           </FormLabel>
-          <div className="flex flex-row gap-2">
+          <div className='flex flex-row gap-2'>
             <FormControl>
               <Input
                 placeholder={placeholder}
@@ -68,27 +61,19 @@ export function FormInput<
                 required={required}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const value =
-                    type === "number"
-                      ? e.target.value === ""
-                        ? ""
-                        : Number(e.target.value)
-                      : e.target.value;
+                    type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value;
                   field.onChange(value as TFieldValues[TName]);
                 }}
                 onBlur={field.onBlur}
                 name={field.name}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 disabled={field.disabled}
                 ref={field.ref as React.Ref<HTMLInputElement>}
               />
             </FormControl>
             {endComponent}
           </div>
-          {helperText && (
-            <div className="text-sm text-gray-500 dark:text-gray-400 my-1">
-              {helperText}
-            </div>
-          )}
+          {helperText && <div className='text-sm text-gray-500 dark:text-gray-400 my-1'>{helperText}</div>}
           <FormMessage>{fieldState.error?.message}</FormMessage>
         </FormItem>
       )}

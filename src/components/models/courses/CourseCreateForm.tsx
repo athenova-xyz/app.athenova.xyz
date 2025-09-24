@@ -1,29 +1,26 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { FormInput } from "@/components/common/Form/FormInput";
-import { FormTextarea } from "@/components/common/Form/FormTextarea";
-import { createCourseAction } from "@/actions/courses/createCourse/action";
-import {
-  createCourseSchema,
-  type CreateCourseInput,
-} from "@/actions/courses/createCourse/schema";
-import { useRouter } from "next/navigation";
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
+import { FormInput } from '@/components/common/Form/FormInput';
+import { FormTextarea } from '@/components/common/Form/FormTextarea';
+import { createCourseAction } from '@/actions/courses/createCourse/action';
+import { createCourseSchema, type CreateCourseInput } from '@/actions/courses/createCourse/schema';
+import { useRouter } from 'next/navigation';
 
 // Simple toast fallback - you can replace this with your preferred toast library
 const toast = {
   success: (message: string) => {
-    console.log("Success:", message);
+    console.log('Success:', message);
     // You can replace this with actual toast implementation
   },
   error: (message: string) => {
-    console.error("Error:", message);
+    console.error('Error:', message);
     // You can replace this with actual toast implementation
-  },
+  }
 };
 
 export function CourseCreateForm() {
@@ -32,11 +29,11 @@ export function CourseCreateForm() {
 
   const form = useForm<CreateCourseInput>({
     resolver: zodResolver(createCourseSchema),
-    mode: "onChange",
+    mode: 'onChange',
     defaultValues: {
-      title: "",
-      description: "",
-    },
+      title: '',
+      description: ''
+    }
   });
 
   const onSubmit = async (values: CreateCourseInput) => {
@@ -46,9 +43,9 @@ export function CourseCreateForm() {
       const result = await createCourseAction(values);
 
       if (result.data) {
-        toast.success("Course created successfully");
+        toast.success('Course created successfully');
         form.reset();
-        router.push("/courses?created=1");
+        router.push('/courses?created=1');
         return;
       }
 
@@ -56,10 +53,10 @@ export function CourseCreateForm() {
       const fieldErrors = result.validationErrors?.fieldErrors;
       if (fieldErrors) {
         Object.entries(fieldErrors).forEach(([key, val]) => {
-          const message = Array.isArray(val) ? val[0] : String(val ?? "");
+          const message = Array.isArray(val) ? val[0] : String(val ?? '');
           form.setError(key as keyof CreateCourseInput, {
-            type: "server",
-            message: message,
+            type: 'server',
+            message: message
           });
         });
         return;
@@ -71,46 +68,36 @@ export function CourseCreateForm() {
         return;
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
-      toast.error("An unexpected error occurred");
+      console.error('Unexpected error:', error);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-6">Create Course</h1>
+    <div className='max-w-xl mx-auto p-8'>
+      <h1 className='text-2xl font-bold mb-6'>Create Course</h1>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormInput
-            control={form.control}
-            name="title"
-            label="Title"
-            placeholder="Course title"
-            required
-          />
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+          <FormInput control={form.control} name='title' label='Title' placeholder='Course title' required />
 
           <FormTextarea
             control={form.control}
-            name="description"
-            label="Description"
-            placeholder="Course description"
+            name='description'
+            label='Description'
+            placeholder='Course description'
             rows={4}
             required
           />
 
           <Button
-            className="mt-4"
-            type="submit"
-            disabled={
-              isSubmitting ||
-              !form.formState.isValid ||
-              !form.formState.isDirty
-            }
+            className='mt-4'
+            type='submit'
+            disabled={isSubmitting || !form.formState.isValid || !form.formState.isDirty}
           >
-            {isSubmitting ? "Creating..." : "Create Course"}
+            {isSubmitting ? 'Creating...' : 'Create Course'}
           </Button>
         </form>
       </Form>

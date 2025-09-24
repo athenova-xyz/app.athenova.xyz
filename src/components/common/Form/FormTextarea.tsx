@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  type Control,
-} from "@/components/ui/form";
-import type { FieldPath, FieldValues } from "react-hook-form";
+import React from 'react';
+import { Textarea } from '@/components/ui/textarea';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage, type Control } from '@/components/ui/form';
+import type { FieldPath, FieldValues } from 'react-hook-form';
 
 export interface FormTextareaProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -37,7 +30,7 @@ export function FormTextarea<
   required = false,
   helperText,
   rows = 4,
-  className,
+  className
 }: FormTextareaProps<TFieldValues, TName>) {
   const inputId = React.useId();
   const helpId = helperText ? `${inputId}-help` : undefined;
@@ -47,13 +40,12 @@ export function FormTextarea<
       name={name}
       render={({ field, fieldState }) => {
         const errorId = fieldState.error ? `${inputId}-error` : undefined;
-        const describedBy =
-          [helpId, errorId].filter(Boolean).join(" ") || undefined;
+        const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
         return (
           <FormItem className={className}>
             <FormLabel htmlFor={inputId}>
               {label}
-              {required && <span className="text-red-500 ml-1">*</span>}
+              {required && <span className='text-red-500 ml-1'>*</span>}
             </FormLabel>
             <FormControl>
               <Textarea
@@ -61,7 +53,7 @@ export function FormTextarea<
                 placeholder={placeholder}
                 rows={rows}
                 required={required}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 name={field.name}
@@ -72,16 +64,11 @@ export function FormTextarea<
               />
             </FormControl>
             {helperText && (
-              <div
-                id={helpId}
-                className="text-sm text-gray-500 dark:text-gray-400 my-1"
-              >
+              <div id={helpId} className='text-sm text-gray-500 dark:text-gray-400 my-1'>
                 {helperText}
               </div>
             )}
-            <FormMessage id={`${inputId}-error`}>
-              {fieldState.error?.message}
-            </FormMessage>
+            <FormMessage id={`${inputId}-error`}>{fieldState.error?.message}</FormMessage>
           </FormItem>
         );
       }}
