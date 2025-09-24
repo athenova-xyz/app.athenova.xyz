@@ -1,19 +1,25 @@
-'use client';
+"use client"
 
-// Minimal toast wrapper used as a drop-in for sonner-style API.
-// Replace with the real `sonner` library and a global Toaster if you prefer.
-export const toast = {
-  success: (message: string) => {
-    console.log('Toast success:', message);
-  },
-  error: (message: string) => {
-    console.error('Toast error:', message);
-  }
-};
+import { useTheme } from "next-themes"
+import { Toaster as Sonner, ToasterProps } from "sonner"
 
-export function Toaster() {
-  // Placeholder for a global toast container. If you install `sonner`, render its Toaster here.
-  return null;
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps["theme"]}
+      className="toaster group"
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+        } as React.CSSProperties
+      }
+      {...props}
+    />
+  )
 }
 
-export default toast;
+export { Toaster }

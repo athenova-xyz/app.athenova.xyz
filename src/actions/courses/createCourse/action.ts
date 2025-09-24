@@ -8,10 +8,8 @@ export const createCourseAction = authActionClient
   .inputSchema(createCourseSchema)
   .metadata({ actionName: 'createCourse' })
   .action(async ({ parsedInput, ctx }) => {
-    const userId = ctx.session.user?.id;
-    if (!userId) {
-      throw new Error('Not Authorised');
-    }
+    const userId = ctx.session.user.id;
+
     try {
       const result = await createCourse(parsedInput, userId);
 
@@ -28,7 +26,7 @@ export const createCourseAction = authActionClient
         throw new Error(error.message);
       }
 
-      console.error('Create course error:', { message: error.message, userId });
+      console.error('Create course error:', error, { userId });
       throw new Error('Something went wrong');
     }
   });

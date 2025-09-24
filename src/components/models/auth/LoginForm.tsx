@@ -9,18 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormInput } from '@/components/common/Form/FormInput';
 import { useAction } from 'next-safe-action/hooks';
-import { toast } from '../../ui/sonner';
-import { signinAction } from '@/actions/auth/email/signin/action';
-import { signinSchema } from '@/actions/auth/email/signin/schema';
+import { signinAction } from '@/actions/auth/signin/action';
+import { SigninInput, signinSchema } from '@/actions/auth/signin/schema';
+import Link from 'next/link';
+import { toast } from 'sonner';
 
-type EmailSignInInput = {
-  email: string;
-  password: string;
-};
-
-export function EmailLoginCard() {
+export function LoginForm() {
   const router = useRouter();
-  const form = useForm<EmailSignInInput>({
+  const form = useForm<SigninInput>({
     resolver: zodResolver(signinSchema),
     mode: 'onChange',
     defaultValues: { email: '', password: '' }
@@ -83,6 +79,15 @@ export function EmailLoginCard() {
             >
               {isExecuting ? 'Signing in...' : 'Sign In'}
             </Button>
+
+            <div className='mt-8 w-full space-y-4 max-w-sm'>
+              <p className='mt-6 text-center text-xs text-muted-foreground'>
+                Don&apos;t have an account?{' '}
+                <Link href='/signup' className='athena-link'>
+                  Sign up
+                </Link>
+              </p>
+            </div>
           </form>
         </Form>
       </div>

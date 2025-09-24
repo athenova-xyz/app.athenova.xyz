@@ -3,14 +3,14 @@ import 'server-only';
 import { prisma } from '@/lib/prisma';
 import { Result, success, failure } from '@/lib/result';
 import bcryptjs from 'bcryptjs';
-import { SigninInput } from '../email/signin/schema';
+import { SigninInput } from './schema';
 import { getSession } from '@/lib/session';
 
 type UserWithoutPassword = {
   id: string;
-  displayName: string | null;
-  email: string;
+  email: string | null;
   role: string;
+  displayName?: string | null;
 };
 
 export async function signin(input: SigninInput): Promise<Result<UserWithoutPassword>> {
@@ -23,15 +23,20 @@ export async function signin(input: SigninInput): Promise<Result<UserWithoutPass
     where: { email: normalisedEmail },
     select: {
       id: true,
-      displayName: true,
       email: true,
+      displayName: true,
       passwordHash: true,
       role: true
     }
   });
 
-  if (!user || !user.passwordHash) {
-    console.error('Signin error: User not found or no password');
+  if (!user) {
+    console.error('Signin error: User not found');
+    return failure('Invalid credentials');
+  }
+
+  if (!user.passwordHash) {
+    console.error('Signin error: No password set for user');
     return failure('Invalid credentials');
   }
 
@@ -42,18 +47,12 @@ export async function signin(input: SigninInput): Promise<Result<UserWithoutPass
     return failure('Invalid credentials');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash: _passwordHash, ...userWithoutPassword } = user;
+  const { passwordHash: _password, ...userWithoutPassword } = user;
 
   // Set session
   const session = await getSession();
   session.user = { id: userWithoutPassword.id };
   await session.save();
 
-  return success({
-    id: userWithoutPassword.id,
-    displayName: userWithoutPassword.displayName,
-    email: userWithoutPassword.email!, // We know email exists since we found user by email
-    role: userWithoutPassword.role.toString()
-  });
+  return success(userWithoutPassword);
 }

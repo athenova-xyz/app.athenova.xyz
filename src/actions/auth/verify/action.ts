@@ -7,9 +7,9 @@ import { verifySiweSchema } from './schema';
 export const verifySiweAction = actionClient
   .inputSchema(verifySiweSchema)
   .metadata({ actionName: 'auth.verifySiwe' })
-  .action(async ({ parsedInput, ctx }) => {
+  .action(async ({ parsedInput }) => {
     try {
-      const result = await verifySiwe(parsedInput.message, parsedInput.signature, ctx.headers);
+      const result = await verifySiwe(parsedInput);
 
       if (result.success) {
         return result.data;

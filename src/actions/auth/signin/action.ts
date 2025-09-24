@@ -2,7 +2,7 @@
 
 import { actionClient } from '@/lib/action';
 import { signin } from './logic';
-import { signinSchema } from '../email/signin/schema';
+import { signinSchema } from './schema';
 
 export const signinAction = actionClient
   .inputSchema(signinSchema)
@@ -24,7 +24,9 @@ export const signinAction = actionClient
         throw new Error(error.message);
       }
 
-      console.error('Sign in error:', { message: error.message, email: '[redacted]' });
+      console.error('Sign in error:', error, {
+        email: '[redacted]'
+      });
       throw new Error('Something went wrong');
     }
   });

@@ -3,7 +3,7 @@
 import { issueNonce } from './logic';
 import { actionClient } from '@/lib/action';
 
-export const issueNonceAction = actionClient.metadata({ actionName: 'auth.issueNonce' }).action(async () => {
+export const issueNonceAction = actionClient.metadata({ actionName: 'issueNonce' }).action(async () => {
   try {
     const result = await issueNonce();
 
@@ -20,7 +20,7 @@ export const issueNonceAction = actionClient.metadata({ actionName: 'auth.issueN
       throw new Error(error.message);
     }
 
-    console.error('Issue nonce error:', { message: error.message });
+    console.error('Issue nonce error:', error);
     throw new Error('Something went wrong');
   }
 });
