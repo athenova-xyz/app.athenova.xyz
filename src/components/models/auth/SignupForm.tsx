@@ -9,22 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { FormInput } from '@/components/common/Form/FormInput';
 import { useAction } from 'next-safe-action/hooks';
-import { signinAction } from '@/actions/auth/signin/action';
-import { SigninInput, signinSchema } from '@/actions/auth/signin/schema';
+import { signupAction } from '@/actions/auth/signup/action';
+import { SignupInput, signupSchema } from '@/actions/auth/signup/schema';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
 export function SignupForm() {
   const router = useRouter();
-  const form = useForm<SigninInput>({
-    resolver: zodResolver(signinSchema),
+  const form = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
     mode: 'onChange',
-    defaultValues: { email: '', password: '' }
+    defaultValues: { name: '', email: '', password: '' }
   });
 
-  const { execute, isExecuting } = useAction(signinAction, {
+  const { execute, isExecuting } = useAction(signupAction, {
     onSuccess: () => {
-      toast.success('Signed in successfully');
+      toast.success('Account created successfully');
       form.reset();
       router.push('/courses/create');
     },
@@ -37,7 +37,7 @@ export function SignupForm() {
           ? Object.entries(fieldErrors)
               .map(([key, value]) => `${key}: ${value}`)
               .join(', ')
-          : 'Sign in failed');
+          : 'Sign up failed');
 
       toast.error(errorMessage);
     }
@@ -50,11 +50,12 @@ export function SignupForm() {
           <h2 className='text-xl font-semibold text-foreground'>Athenova</h2>
         </div>
 
-        <p className='mt-6 text-sm text-muted-foreground'>Sign in With Email</p>
+        <p className='mt-6 text-sm text-muted-foreground'>Sign up With Email</p>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(execute)} className='mt-8 w-full space-y-4 max-w-sm text-left'>
             <div className='space-y-2'>
+              <FormInput control={form.control} name='name' label='Enter Your Name' placeholder='John Doe' required />
               <FormInput
                 control={form.control}
                 name='email'
@@ -77,14 +78,14 @@ export function SignupForm() {
               type='submit'
               disabled={isExecuting || !form.formState.isValid || !form.formState.isDirty}
             >
-              {isExecuting ? 'Signing in...' : 'Sign In'}
+              {isExecuting ? 'Creating account...' : 'Sign Up'}
             </Button>
 
             <div className='mt-8 w-full space-y-4 max-w-sm'>
               <p className='mt-6 text-center text-xs text-muted-foreground'>
-                Don&apos;t have an account?{' '}
-                <Link href='/signup' className='athena-link'>
-                  Sign up
+                Already have an account?{' '}
+                <Link href='/login' className='athena-link'>
+                  Sign in
                 </Link>
               </p>
             </div>
