@@ -10,13 +10,13 @@ import { Form } from '@/components/ui/form';
 import { FormInput } from '@/components/common/Form/FormInput';
 import { useAction } from 'next-safe-action/hooks';
 import { signupAction } from '@/actions/auth/signup/action';
-import { SignupInput, signupSchema } from '@/actions/auth/signup/schema';
+import { signupSchema } from '@/actions/auth/signup/schema';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
 export function SignupForm() {
   const router = useRouter();
-  const form = useForm<SignupInput>({
+  const form = useForm({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
     defaultValues: { name: '', email: '', password: '' }
