@@ -51,6 +51,22 @@
   --blue-600: #2563eb;
   /* Auth/card border color (slightly deeper than #e6f4ff) */
   --auth-border: #cfe8ff;
+  /* UI tokens mapped from hard-coded hex colors used across components */
+  --ui-border: #e6e9ee; /* used for small rounded icon button borders */
+  --ui-hover-bg: #fafbfc; /* hover background for small icon buttons */
+  --path-border: #d6e9fb; /* outer border for PathOption card */
+  --path-bg: #EAF6FF; /* pale blue background for PathOption icon circle */
+  --path-inner-border: #BFE9FF; /* inner border for PathOption icon circle */
+  --cta-blue: #1E90FF; /* CTA button primary color */
+  --cta-blue-hover: #0b7ed6; /* CTA button hover color */
+  --page-bg: #FAFAFA; /* page background used in layouts */
+  --dark-badge-bg: #262626; /* dark floating badge background */
+  --stroke-blue: #2196F3; /* svg stroke used in path icons */
+  --nav-stroke: #0f172a; /* navbar icon stroke color */
+  --hover-dark: #383838; /* hover color used on dark buttons */
+  --hover-light: #f2f2f2; /* light hover background */
+  --hover-light-dark: #cccccc; /* light hover color in dark mode */
+  --hover-dark-mode-bg: #1a1a1a; /* dark-mode hover background used in some buttons */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -86,6 +102,22 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+  /* Dark-mode overrides for onboarding / UI tokens */
+  --ui-border: #2a2a2a;
+  --ui-hover-bg: #111217;
+  --path-border: #1f2937; /* slate-800 */
+  --path-bg: #0b1220; /* very dark blue/gray */
+  --path-inner-border: #172554; /* indigo-900-ish for subtle inner edge */
+  --cta-blue: #3b82f6;
+  --cta-blue-hover: #2563eb;
+  --page-bg: #071025;
+  --dark-badge-bg: #111214;
+  --stroke-blue: #60a5fa;
+  --nav-stroke: #cbd5f5;
+  --hover-dark: #374151; /* slate-700 */
+  --hover-light: #1f2937; /* used for light-hover equivalents in dark mode */
+  --hover-light-dark: #1f2937;
+  --hover-dark-mode-bg: #06101a;
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);

@@ -11,7 +11,7 @@
 
 Athenova is a DeFi-native launchpad for educational courses, built to break down the barriers between creators, their communities, and the value they generate together. We're replacing traditional gatekeepers with a transparent, community-driven ecosystem where:
 
-- Educators can fund their ambitious projects without seeking venture capital.
+- Educators can fund their ambitious project without seeking venture capital.
 - Backers become co-owners, sharing in the financial success of courses they believe in.
 - Learners access high-quality content through a seamless, Web3-native experience.
 
