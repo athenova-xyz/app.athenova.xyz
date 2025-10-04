@@ -6,7 +6,7 @@ import Navbar from '@/components/common/Navbar';
 import Image from 'next/image';
 import { PathOption } from '@/components/common/PathOption';
 
-export function PathSelectionPageContainer() {
+export function HomePageContainer() {
   const router = useRouter();
 
   const handleStudent = React.useCallback(() => {
