@@ -17,6 +17,7 @@ export interface FormTextareaProps<
   helperText?: string;
   rows?: number;
   className?: string;
+  maxLength?: number;
 }
 
 export function FormTextarea<
@@ -30,7 +31,8 @@ export function FormTextarea<
   required = false,
   helperText,
   rows = 4,
-  className
+  className,
+  maxLength
 }: FormTextareaProps<TFieldValues, TName>) {
   const inputId = React.useId();
   const helpId = helperText ? `${inputId}-help` : undefined;
@@ -40,7 +42,8 @@ export function FormTextarea<
       name={name}
       render={({ field, fieldState }) => {
         const errorId = fieldState.error ? `${inputId}-error` : undefined;
-        const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined;
+        const counterId = maxLength ? `${inputId}-counter` : undefined;
+        const describedBy = [helpId, errorId, counterId].filter(Boolean).join(' ') || undefined;
         return (
           <FormItem className={className}>
             <FormLabel htmlFor={inputId}>
@@ -61,11 +64,21 @@ export function FormTextarea<
                 aria-invalid={!!fieldState.error}
                 aria-describedby={describedBy}
                 ref={field.ref as React.Ref<HTMLTextAreaElement>}
+                maxLength={maxLength}
               />
             </FormControl>
             {helperText && (
               <div id={helpId} className='text-sm text-gray-500 dark:text-gray-400 my-1'>
                 {helperText}
+              </div>
+            )}
+            {maxLength && (
+              <div
+                id={`${inputId}-counter`}
+                className='text-sm text-gray-500 dark:text-gray-400 my-1 text-right'
+                aria-live='polite'
+              >
+                {field.value?.toString().length ?? 0} / {maxLength}
               </div>
             )}
             <FormMessage id={`${inputId}-error`}>{fieldState.error?.message}</FormMessage>
