@@ -50,8 +50,19 @@ export function CreateCourseForm() {
       <h1 className='text-2xl font-bold mb-6'>Create Course</h1>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(execute)} className='space-y-4'>
+        <form
+          onSubmit={form.handleSubmit((data) => {
+            const trimmedData = {
+              ...data,
+              title: data.title.trim(),
+              description: data.description.trim()
+            };
+            execute(trimmedData);
+          })}
+          className='space-y-4'
+        >
           <FormInput control={form.control} required label='Title' name='title' placeholder='Course title' />
+          <p className='text-sm text-gray-500'>Leading and trailing whitespace will be trimmed.</p>
 
           <FormTextarea
             control={form.control}
@@ -65,7 +76,7 @@ export function CreateCourseForm() {
           <Button
             className='mt-4'
             type='submit'
-            disabled={isExecuting || !form.formState.isValid || !form.formState.isDirty}
+            disabled={isExecuting || !form.formState.isValid || !form.formState.isDirty || form.getValues('title').trim() === ''}
           >
             {isExecuting ? 'Creating...' : 'Create Course'}
           </Button>
