@@ -14,7 +14,8 @@ export default function Navbar() {
       <div className='ml-auto flex items-center gap-3'>
         <button
           aria-label='Toggle theme'
-          className='w-10 h-10 rounded-full bg-white border border-[var(--ui-border)] flex items-center justify-center hover:bg-[var(--ui-hover-bg)]'
+          role='button'
+          className='w-10 h-10 rounded-full bg-white border border-[var(--ui-border)] flex items-center justify-center hover:bg-[var(--ui-hover-bg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
         >
           {/* moon / crescent icon */}
           <svg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
@@ -31,7 +32,8 @@ export default function Navbar() {
 
         <button
           aria-label='Account'
-          className='w-10 h-10 rounded-full bg-white border border-[var(--ui-border)] flex items-center justify-center'
+          role='button'
+          className='w-10 h-10 rounded-full bg-white border border-[var(--ui-border)] flex items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
         >
           {/* user icon */}
           <svg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>
