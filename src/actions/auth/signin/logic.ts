@@ -50,9 +50,29 @@ export async function signin(input: SigninInput): Promise<Result<UserWithoutPass
   const { passwordHash: _password, ...userWithoutPassword } = user;
 
   // Set session
-  const session = await getSession();
-  session.user = { id: userWithoutPassword.id };
-  await session.save();
+  try {
+    const session = await getSession();
+    session.user = { id: userWithoutPassword.id };
+    await session.save();
+  } catch (error) {
+    console.error('Signin error: Failed to set or save session:', error);
+    return failure('An unexpected error occurred. Please try again.');
+  }
 
   return success(userWithoutPassword);
 }
+
+/*
+ * Testing Notes:
+ *
+ * To test with invalid credentials:
+ *   - Provide an email that does not exist in the database.
+ *   - Provide a valid email but an incorrect password.
+ *   - In both cases, the expected outcome is a 'failure' result with the message 'Invalid credentials'.
+ *     The console should log a more specific error (e.g., 'User not found' or 'Invalid password').
+ *
+ * To test with successful sign-in:
+ *   - Provide a valid email and the correct password for an existing user.
+ *   - The expected outcome is a 'success' result containing the user's information (without passwordHash).
+ *   - A session should be successfully created and saved.
+ */
