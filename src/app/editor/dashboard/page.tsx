@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import documents from '../../../data/documents.json';
 
 export default function EditorDashboard() {
   return (
@@ -14,7 +13,8 @@ export default function EditorDashboard() {
       <div className='rounded-lg border bg-background p-4'>
         <h2 className='text-lg font-semibold mb-4'>Your Courses</h2>
         <ul className='space-y-2'>
-          {documents.map((doc) => (
+          {/* Using an empty array for documents as the file has been removed */}
+          {([]).map((doc) => (
             <li
               key={doc.id}
               className='flex items-center justify-between rounded-md px-3 py-2 hover:bg-muted transition'
