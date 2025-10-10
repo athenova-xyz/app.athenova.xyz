@@ -1,31 +1,35 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import React from 'react';
 
-export default function MyEditor() {
-  const [EditorComp, setEditorComp] = useState<React.ReactNode>(null);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const [{ useCreateBlockNote }, { BlockNoteView }] = await Promise.all([
-        import('@blocknote/react'),
-        import('@blocknote/mantine')
-      ]);
-      if (!active) return;
-      const EditorInner = () => {
-        const editor = useCreateBlockNote();
-        return <BlockNoteView editor={editor} />;
-      };
-      setEditorComp(<EditorInner />);
-    })();
-    return () => {
-      active = false;
+const BlockNoteEditor = dynamic(
+  async () => {
+    const [{ useCreateBlockNote }, { BlockNoteView }] = await Promise.all([
+      import('@blocknote/react'),
+      import('@blocknote/mantine')
+    ]);
+    const EditorInner = (props: any) => {
+      const editor = useCreateBlockNote();
+      return <BlockNoteView editor={editor} {...props} />;
     };
-  }, []);
+    return EditorInner;
+  },
+  {
+    ssr: false,
+    loading: () => (
+      <textarea
+        className='min-h-[400px] w-full p-4 text-sm text-muted-foreground border rounded-md bg-gray-100 resize-none'
+        placeholder='Loading editor...'
+        disabled
+      />
+    ),
+  }
+);
 
+export default function MyEditor(props: any) {
   return (
     <div className='min-h-[400px]'>
-      {EditorComp || <div className='p-4 text-sm text-muted-foreground animate-pulse'>Loading editor…</div>}
+      <BlockNoteEditor {...props} />
     </div>
   );
 }
